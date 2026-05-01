@@ -2,16 +2,21 @@
 # define IRC_HPP
 
 #include <iostream>
-#include <string>       // container
-#include <vector>       // container
-#include <map>          // container
-#include <cstring>      // pour memset
-#include <cstdlib>      // pour l'exit
-#include <unistd.h>     // pour close
+#include <string>       
+#include <vector>       
+#include <map> 
+#include <cstring>
+#include <cstdlib> 
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <poll.h>       // gerer les inputs clients
+#include <poll.h>
+#include <signal.h>
+#include "Server.hpp"
+#include "Client.hpp"
+
+void    handle_sig(int sig);
 
 #endif
