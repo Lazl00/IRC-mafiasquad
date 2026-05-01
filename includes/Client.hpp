@@ -3,7 +3,6 @@
 
 class Client {
     private:
-        
 
     public:
 };

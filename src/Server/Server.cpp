@@ -6,7 +6,7 @@
 /*   By: wailas <wailas@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/28 12:00:01 by wailas            #+#    #+#             */
-/*   Updated: 2026/05/01 14:20:18 by wailas           ###   ########.fr       */
+/*   Updated: 2026/05/01 15:57:54 by wailas           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,6 +48,16 @@ void    Server::init_server(int port)
         exit(1);
     }
 };
+
+void    Server::init_poll()
+{
+    fds.push_back(serveur_fd);
+}
+
+std::vector<struct pollfd> Server::getFds() const
+{
+    return (this->fds);
+}
 
 int     Server::getServerFd() const
 {
