@@ -1,11 +1,14 @@
 #pragma once
-#include "irc.hpp"
+#include "Client.hpp"
 #include <vector>
 
-class Server {
+class Server
+{
     private:
         int                         serveur_fd;
         std::vector<struct pollfd>  fds;
+        std::vector<Client>         clients;
+        int                         next_id;
     public:
         Server();
         ~Server();

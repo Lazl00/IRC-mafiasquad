@@ -19,21 +19,8 @@ int main(int ac, char **av)
 
     std::cout << "Server listening on port " << port << std::endl;
 
-    sockaddr_in client_addr;
-    socklen_t len = sizeof(client_addr);
-
-    int client_fd = accept(Serv.getServerFd(), (struct sockaddr*)&client_addr, &len);
-    if (client_fd < 0)
-    {
-        perror("accept");
-        return 1;
-    }
-
-    std::cout << "Client connected!" << std::endl;
-
-    close(client_fd);
-    close(Serv.getServerFd());
-    return 0;
+    Serv.init_poll();
+    return (0);
 }
 
 void handle_sig(int sig)

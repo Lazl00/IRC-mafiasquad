@@ -6,7 +6,7 @@
 /*   By: wailas <wailas@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/28 12:00:01 by wailas            #+#    #+#             */
-/*   Updated: 2026/05/01 15:57:54 by wailas           ###   ########.fr       */
+/*   Updated: 2026/05/06 16:41:32 by wailas           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,11 +14,17 @@
 
 Server::Server() {};
 
-Server::~Server() {};
+Server::~Server()
+{
+    for (size_t i = 0; i < fds.size(); i++)
+        close(fds[i].fd);
+    fds.clear();
+};
 
 void    Server::init_server(int port)
 {
     int opt;
+    this->next_id = 1;
 
     opt = 1;
     serveur_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -51,7 +57,47 @@ void    Server::init_server(int port)
 
 void    Server::init_poll()
 {
-    fds.push_back(serveur_fd);
+    struct pollfd   serveur_fd_poll;
+    int             i;
+
+    i = 0;
+    serveur_fd_poll.fd = serveur_fd;
+    serveur_fd_poll.events = POLLIN;
+    serveur_fd_poll.revents = 0;
+    fds.push_back(serveur_fd_poll);
+    
+    while (true)
+    {
+        poll(fds.data(), fds.size(), -1);
+        if (fds[0].revents & POLLIN)
+        {
+            int fd;
+            
+            fd = accept(this->serveur_fd, NULL, NULL);
+            Client client(fd, this->next_id++);
+            this->clients.push_back(client);
+            this->fds.push_back(client.getCfp());
+        }
+        for (size_t i = 1; i < fds.size(); i++)
+        {
+            char buffer[512];
+            if (fds[i].revents & POLLIN)
+            {
+                int result;
+                
+                result = recv(fds[i].fd, buffer, sizeof(buffer), 0);
+                if (result < 0)
+                {
+                    perror("funtion recv got an error");
+                    exit(0);
+                }
+                else if (result == 0)
+                    std::cout << "deconect"<< std::endl;
+                else
+                    std::cout << "bien recu " << std::endl;
+            }
+        }
+    }
 }
 
 std::vector<struct pollfd> Server::getFds() const
