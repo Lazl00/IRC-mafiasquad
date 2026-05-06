@@ -6,7 +6,7 @@
 /*   By: wailas <wailas@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/06 15:28:39 by wailas            #+#    #+#             */
-/*   Updated: 2026/05/06 16:34:57 by wailas           ###   ########.fr       */
+/*   Updated: 2026/05/06 16:47:54 by wailas           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,7 @@ Client::Client(int fd, int id) : fd(fd), id(id)
     this->cfp.fd = fd;
     this->cfp.events = POLLIN;
     this->cfp.revents = 0;
+    std::cout << "Client [" << this->id<< "] connecte"<< std::endl;
 }
 
 struct pollfd Client::getCfp()

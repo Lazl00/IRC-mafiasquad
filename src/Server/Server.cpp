@@ -6,7 +6,7 @@
 /*   By: wailas <wailas@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/28 12:00:01 by wailas            #+#    #+#             */
-/*   Updated: 2026/05/06 16:41:32 by wailas           ###   ########.fr       */
+/*   Updated: 2026/05/06 16:53:20 by wailas           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -93,8 +93,9 @@ void    Server::init_poll()
                 }
                 else if (result == 0)
                     std::cout << "deconect"<< std::endl;
-                else
-                    std::cout << "bien recu " << std::endl;
+                else {
+                    std::cout << "Client [" << i << "] sent message : \n" << buffer << std::endl;
+                }
             }
         }
     }
