@@ -6,7 +6,7 @@
 /*   By: wailas <wailas@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/28 12:00:01 by wailas            #+#    #+#             */
-/*   Updated: 2026/05/06 16:53:20 by wailas           ###   ########.fr       */
+/*   Updated: 2026/05/12 12:11:46 by wailas           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -80,11 +80,11 @@ void    Server::init_poll()
         }
         for (size_t i = 1; i < fds.size(); i++)
         {
-            char buffer[512];
+            char buffer[1024];
             if (fds[i].revents & POLLIN)
             {
                 int result;
-                
+                memset(buffer, 0, sizeof(buffer));
                 result = recv(fds[i].fd, buffer, sizeof(buffer), 0);
                 if (result < 0)
                 {
@@ -94,7 +94,8 @@ void    Server::init_poll()
                 else if (result == 0)
                     std::cout << "deconect"<< std::endl;
                 else {
-                    std::cout << "Client [" << i << "] sent message : \n" << buffer << std::endl;
+                    std::cout << "Client [" << i << "] sent message : " << buffer << std::endl;
+                    exec(buffer, fds[i].fd);
                 }
             }
         }
@@ -111,3 +112,23 @@ int     Server::getServerFd() const
     return (this->serveur_fd);
 }
 
+void    Server::exec(char *buffer, int fd)
+{
+    std::ostringstream  oss;
+    std::string         result;
+
+    oss << ":ircserv you don't have permission to do this" << std::endl;
+    result = oss.str();
+    send(fd, result.c_str(), result.size() ,0);
+}
+
+std::string Server::getBackgroundColorCode(int socket)
+{
+	int colorCode;
+    
+    colorCode = 41 + (socket % 7);
+	std::stringstream color;
+
+	color << "\033[1;97;" << colorCode << "m";
+	return color.str();
+}
