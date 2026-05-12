@@ -6,7 +6,7 @@
 /*   By: wailas <wailas@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/28 12:00:01 by wailas            #+#    #+#             */
-/*   Updated: 2026/05/12 12:11:46 by wailas           ###   ########.fr       */
+/*   Updated: 2026/05/12 16:11:41 by wailas           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -95,7 +95,7 @@ void    Server::init_poll()
                     std::cout << "deconect"<< std::endl;
                 else {
                     std::cout << "Client [" << i << "] sent message : " << buffer << std::endl;
-                    exec(buffer, fds[i].fd);
+                    exec(buffer, fds[i].fd, i);
                 }
             }
         }
@@ -112,14 +112,28 @@ int     Server::getServerFd() const
     return (this->serveur_fd);
 }
 
-void    Server::exec(char *buffer, int fd)
+void    Server::exec(char *buffer, int fd, size_t &i)
 {
     std::ostringstream  oss;
+    std::istringstream  iss(buffer);
     std::string         result;
+    std::string         message;
+    i = i - 1;
 
     oss << ":ircserv you don't have permission to do this" << std::endl;
     result = oss.str();
-    send(fd, result.c_str(), result.size() ,0);
+    iss >> message;
+    if (message == "PASS" || message == "pass")
+    {
+        clients[i].setHasPassword(1);
+    }
+    if (clients[i].getHasPassword() == 1)
+        std::cout << "Le Client a le mot de passe [" << clients[i].getHasPassword() << "]" << std::endl;
+    else {
+        std::cout << "Le Client n'as pas le mot de passe [" << clients[i].getHasPassword() << "]" << std::endl;
+        send(fd, result.c_str(), result.size() ,0);
+    }
+    std::cout << "le client actuel qui envoie un message est moi ["<< i << "]"<< std::endl;
 }
 
 std::string Server::getBackgroundColorCode(int socket)

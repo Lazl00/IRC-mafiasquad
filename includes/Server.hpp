@@ -15,7 +15,7 @@ class Server
         void        init_server(int port);
         int         getServerFd() const;
         void        init_poll();
-        void        exec(char *buffer, int fd);
+        void        exec(char *buffer, int fd, size_t &i);
         std::string getBackgroundColorCode(int socket);
         std::vector<struct pollfd> getFds() const;
 };
