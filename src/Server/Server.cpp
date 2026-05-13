@@ -6,7 +6,7 @@
 /*   By: wailas <wailas@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/28 12:00:01 by wailas            #+#    #+#             */
-/*   Updated: 2026/05/12 16:11:41 by wailas           ###   ########.fr       */
+/*   Updated: 2026/05/13 16:04:17 by wailas           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -71,10 +71,12 @@ void    Server::init_poll()
         poll(fds.data(), fds.size(), -1);
         if (fds[0].revents & POLLIN)
         {
-            int fd;
+            int         fd;
+            std::string clientColor;
             
             fd = accept(this->serveur_fd, NULL, NULL);
-            Client client(fd, this->next_id++);
+            clientColor = getBackgroundColorCode(this->next_id);
+            Client client(fd, this->next_id++, clientColor);
             this->clients.push_back(client);
             this->fds.push_back(client.getCfp());
         }
@@ -91,10 +93,15 @@ void    Server::init_poll()
                     perror("funtion recv got an error");
                     exit(0);
                 }
-                else if (result == 0)
-                    std::cout << "deconect"<< std::endl;
+                else if (result == 0) {
+                    std::cout << clients[i - 1].getColor() << "Client [" << i << "] deconnected\033[0m" << std::endl;
+                    close(fds[i].fd);
+                    fds.erase(fds.begin() + i);
+                    clients.erase(clients.begin() + i - 1);
+                    i--;
+                }
                 else {
-                    std::cout << "Client [" << i << "] sent message : " << buffer << std::endl;
+                    std::cout << clients[i].getColor() << "Client [" << i << "] sent message : \033[0m" << buffer << std::endl;
                     exec(buffer, fds[i].fd, i);
                 }
             }
@@ -144,5 +151,5 @@ std::string Server::getBackgroundColorCode(int socket)
 	std::stringstream color;
 
 	color << "\033[1;97;" << colorCode << "m";
-	return color.str();
+	return (color.str());
 }

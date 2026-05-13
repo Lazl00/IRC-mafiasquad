@@ -6,7 +6,7 @@
 /*   By: wailas <wailas@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/06 15:28:39 by wailas            #+#    #+#             */
-/*   Updated: 2026/05/12 15:49:06 by wailas           ###   ########.fr       */
+/*   Updated: 2026/05/13 16:03:54 by wailas           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,7 @@
 Client::Client() {};
 Client::~Client() {};
         
-Client::Client(int fd, int id) : fd(fd), id(id)
+Client::Client(int fd, int id, std::string color) : fd(fd), id(id), color(color)
 {
     this->id = id;
     this->buffer = "";
@@ -24,7 +24,8 @@ Client::Client(int fd, int id) : fd(fd), id(id)
     this->cfp.events = POLLIN;
     this->cfp.revents = 0;
     this->has_password = 0;
-    std::cout << "\033[1;41mClient [" << this->id<< "] connecte\033[0m"<< std::endl;
+    this->color = color;
+    std::cout << color << "Client [" << this->id<< "] connecte"<< "\033[0m" << std::endl;
 }
 
 struct pollfd Client::getCfp()
@@ -61,6 +62,12 @@ bool Client::getHasPassword() const
 {
     return has_password;
 }
+
+std::string Client::getColor() const
+{
+    return color;
+}
+
 
 void Client::setCfp(struct pollfd newCfp)
 {

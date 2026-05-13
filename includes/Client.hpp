@@ -11,10 +11,11 @@ class Client
         std::string     buffer;
         int             id;
         int             fd;
+        std::string     color;
         bool            has_password;
     public:
         Client();
-        Client(int fd, int id);
+        Client(int fd, int id, std::string color);
         ~Client();
 
         struct pollfd getCfp();
@@ -24,6 +25,7 @@ class Client
         int getId() const;
         int getFd() const;
         bool getHasPassword() const;
+        std::string getColor() const;
 
         void setCfp(struct pollfd newCfp);
         void setNickname(const std::string& newNickname);
