@@ -14,8 +14,8 @@ class Server
         ~Server();
         void        init_server(int port);
         int         getServerFd() const;
-        void        init_poll();
-        void        exec(char *buffer, int fd, size_t &i);
+        void        init_poll(char *av);
+        void        authentication(char *buffer, int fd, size_t i, char *av);
         std::string getBackgroundColorCode(int socket);
         std::vector<struct pollfd> getFds() const;
 };

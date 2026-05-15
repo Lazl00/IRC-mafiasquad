@@ -6,7 +6,7 @@
 /*   By: wailas <wailas@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/28 12:00:01 by wailas            #+#    #+#             */
-/*   Updated: 2026/05/13 16:04:17 by wailas           ###   ########.fr       */
+/*   Updated: 2026/05/15 14:59:58 by wailas           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,7 +55,7 @@ void    Server::init_server(int port)
     }
 };
 
-void    Server::init_poll()
+void    Server::init_poll(char *av)
 {
     struct pollfd   serveur_fd_poll;
     int             i;
@@ -94,15 +94,15 @@ void    Server::init_poll()
                     exit(0);
                 }
                 else if (result == 0) {
-                    std::cout << clients[i - 1].getColor() << "Client [" << i << "] deconnected\033[0m" << std::endl;
+                    std::cout << clients[i - 1].getColor() << "Client [" << clients[i - 1].getId() << "] deconnected\033[0m" << std::endl;
                     close(fds[i].fd);
                     fds.erase(fds.begin() + i);
                     clients.erase(clients.begin() + i - 1);
                     i--;
                 }
                 else {
-                    std::cout << clients[i].getColor() << "Client [" << i << "] sent message : \033[0m" << buffer << std::endl;
-                    exec(buffer, fds[i].fd, i);
+                    std::cout << clients[i - 1].getColor() << "Client [" << clients[i - 1].getId() << "] sent message : " << buffer << "\033[0m" << std::endl;
+                    authentication(buffer, fds[i].fd, i - 1, av);
                 }
             }
         }
@@ -119,28 +119,49 @@ int     Server::getServerFd() const
     return (this->serveur_fd);
 }
 
-void    Server::exec(char *buffer, int fd, size_t &i)
+void    Server::authentication(char *buffer, int fd, size_t i, char *argv)
 {
     std::ostringstream  oss;
     std::istringstream  iss(buffer);
     std::string         result;
-    std::string         message;
-    i = i - 1;
+    std::string         message, remains;
 
-    oss << ":ircserv you don't have permission to do this" << std::endl;
-    result = oss.str();
     iss >> message;
-    if (message == "PASS" || message == "pass")
+    iss >> remains;
+    // faut faire ici le parsing les petits potes
+    if ((message == "PASS" || message == "pass") && clients[i].getHasPassword() == 0)
     {
-        clients[i].setHasPassword(1);
+        if (remains == argv) {
+            clients[i].setHasPassword(1);
+            oss << "\033[32m:ircserv : Password accepted\033[0m" << std::endl;
+            result = oss.str();
+            send(fd, result.c_str(), result.size(), 0);
+        }
+        else {
+            oss << "\033[31m:ircserv ERROR :Password incorrect\033[0m" << std::endl;
+            result = oss.str();
+            send(fd, result.c_str(), result.size() ,0);
+        }
+        return ;
     }
-    if (clients[i].getHasPassword() == 1)
-        std::cout << "Le Client a le mot de passe [" << clients[i].getHasPassword() << "]" << std::endl;
-    else {
-        std::cout << "Le Client n'as pas le mot de passe [" << clients[i].getHasPassword() << "]" << std::endl;
-        send(fd, result.c_str(), result.size() ,0);
+    if (message == "NICK" || message == "nick")
+    {
+        if (remains == "") {
+            std::string result_str;
+            oss << "\033[31m:ircserv ERROR : there's no nickname to change\033[0m" << std::endl;
+            result_str = oss.str();
+            send(fd, result_str.c_str(), result_str.size(), 0);
+        }
+        else {
+            clients[i].setNickname(remains);
+            std::cout << clients[i].getColor() << "Client [" << clients[i].getId() << "] changed his nickname to " << clients[i].getNickname() << std::endl;
+            std::string result_str;
+            oss << "\033[32m:ircserv : new nickname for your profil\033[0m" << std::endl;
+            result_str = oss.str();
+            send(fd, result_str.c_str(), result_str.size(), 0);
+        }
+        return ;
     }
-    std::cout << "le client actuel qui envoie un message est moi ["<< i << "]"<< std::endl;
 }
 
 std::string Server::getBackgroundColorCode(int socket)

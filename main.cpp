@@ -19,7 +19,7 @@ int main(int ac, char **av)
 
     std::cout << "Server listening on port " << port << std::endl;
 
-    Serv.init_poll();
+    Serv.init_poll(av[2]);
     return (0);
 }
 
