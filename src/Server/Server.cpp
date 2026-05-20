@@ -6,7 +6,7 @@
 /*   By: wailas <wailas@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/28 12:00:01 by wailas            #+#    #+#             */
-/*   Updated: 2026/05/20 13:04:05 by wailas           ###   ########.fr       */
+/*   Updated: 2026/05/20 16:07:09 by wailas           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,7 @@ Server::~Server()
     for (size_t i = 0; i < fds.size(); i++)
         close(fds[i].fd);
     fds.clear();
+    clients.clear();
 };
 
 void    Server::init_server(int port)
@@ -54,7 +55,11 @@ void    Server::init_server(int port)
         exit(1);
     }
 };
-
+void    Server::cul_de_walid()
+{
+    std::cout << "cul de waild ;oisi qui transpire comme une grosse merde remplie de merde pute de grosser merde qui pue la merde" << std::endl;
+    fds.clear();
+}
 void    Server::init_poll(char *av)
 {
     struct pollfd   serveur_fd_poll;
@@ -79,6 +84,7 @@ void    Server::init_poll(char *av)
             clientColor = getBackgroundColorCode(this->next_id);
             Client client(fd, this->next_id++, clientColor);
             this->clients.push_back(client); 
+            std::cout << "astaghfirullah" << std::endl;
             this->fds.push_back(client.getCfp());
             msg =
             

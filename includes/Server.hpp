@@ -12,6 +12,7 @@ class Server
     public:
         Server();
         ~Server();
+        void        cul_de_walid();
         void        init_server(int port);
         int         getServerFd() const;
         void        init_poll(char *av);
