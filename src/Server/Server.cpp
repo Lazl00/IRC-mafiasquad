@@ -6,7 +6,7 @@
 /*   By: wailas <wailas@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/28 12:00:01 by wailas            #+#    #+#             */
-/*   Updated: 2026/05/15 16:10:13 by wailas           ###   ########.fr       */
+/*   Updated: 2026/05/20 13:04:05 by wailas           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,7 +28,7 @@ void    Server::init_server(int port)
 
     opt = 1;
     serveur_fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (setsockopt(serveur_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < -1)
+    if (setsockopt(serveur_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
     {
         perror("error on setsockopt");
         exit(1);
@@ -81,6 +81,7 @@ void    Server::init_poll(char *av)
             this->clients.push_back(client); 
             this->fds.push_back(client.getCfp());
             msg =
+            
             "\033[36m:ircserv NOTICE AUTH :Welcome to ircserv!\r\n"
             ":ircserv NOTICE AUTH :Use PASS <password> to authenticate\r\n"
             ":ircserv NOTICE AUTH :Use NICK <nickname> to choose a nickname\r\n"
@@ -101,7 +102,7 @@ void    Server::init_poll(char *av)
                     exit(0);
                 }
                 else if (result == 0) {
-                    std::cout << clients[i - 1].getColor() << "Client [" << clients[i - 1].getId() << "] deconnected\033[0m" << std::endl;
+                    std::cout << clients[i - 1].getColor() << "Client [" << clients[i - 1].getId() << "] disconnected\033[0m" << std::endl;
                     close(fds[i].fd);
                     fds.erase(fds.begin() + i);
                     clients.erase(clients.begin() + i - 1);
@@ -129,7 +130,10 @@ int     Server::getServerFd() const
 
 void    Server::check_register(int fd, size_t i)
 {
-    std::cout << "coucou " << std::endl;
+    std::cout << "j'ai valide pour le moment : " << clients[i].getHasRegister()
+        << clients[i].getHasPassword()
+        << clients[i].getHasNickname()
+        << clients[i].getHasUser()<< std::endl;
     if (clients[i].getHasRegister()
         && clients[i].getHasPassword()
         && clients[i].getHasNickname()
@@ -183,6 +187,7 @@ void    Server::authentication(char *buffer, int fd, size_t i, char *argv)
             }
             else {
                 clients[i].setNickname(remains);
+                clients[i].setHasNickname(true);
                 std::cout << clients[i].getColor() << "Client [" << clients[i].getId() << "] changed his nickname to " << clients[i].getNickname() << std::endl;
                 std::string result_str;
                 oss << "\033[32m:ircserv : new nickname for your profil\033[0m" << std::endl;
@@ -193,12 +198,17 @@ void    Server::authentication(char *buffer, int fd, size_t i, char *argv)
         }
         if (message == "USER" || message == "user")
         {
+            std::cout << "COUCOUCJAWIAFHWA" << std::endl;
             std::string char_1, char_2, char_3;
-            iss >> message;
             iss >> char_1;
             iss >> char_2;
             iss >> char_3;
             iss >> remains;
+            std::cout << "message " << message << std::endl;
+            std::cout << "char_1 " << char_1 << std::endl;
+            std::cout << "char_2 " << char_2 << std::endl;
+            std::cout << "char_3 " << char_3 << std::endl;
+            std::cout << "remains " << remains << std::endl;
             if (char_1 == "")
                 return ;
             if (char_2 == "")
