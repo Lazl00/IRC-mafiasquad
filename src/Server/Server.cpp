@@ -6,7 +6,7 @@
 /*   By: wailas <wailas@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/28 12:00:01 by wailas            #+#    #+#             */
-/*   Updated: 2026/05/20 16:07:09 by wailas           ###   ########.fr       */
+/*   Updated: 2026/05/29 16:30:00 by wailas           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,7 +55,7 @@ void    Server::init_server(int port)
         exit(1);
     }
 };
-void    Server::cul_de_walid()
+void    Server::sig_handler()
 {
     std::cout << "cul de waild ;oisi qui transpire comme une grosse merde remplie de merde pute de grosser merde qui pue la merde" << std::endl;
     fds.clear();
@@ -118,6 +118,7 @@ void    Server::init_poll(char *av)
                     std::cout << clients[i - 1].getColor() << "Client [" << clients[i - 1].getId() << "] sent message : " << buffer << "\033[0m" << std::endl;
                     authentication(buffer, fds[i].fd, i - 1, av);
                     check_register(fds[i].fd, i - 1);
+                    private_message(i - 1, buffer, fds[0].fd);
                 }
             }
         }
@@ -204,7 +205,6 @@ void    Server::authentication(char *buffer, int fd, size_t i, char *argv)
         }
         if (message == "USER" || message == "user")
         {
-            std::cout << "COUCOUCJAWIAFHWA" << std::endl;
             std::string char_1, char_2, char_3;
             iss >> char_1;
             iss >> char_2;
@@ -227,7 +227,6 @@ void    Server::authentication(char *buffer, int fd, size_t i, char *argv)
             clients[i].setRealname(remains);
             clients[i].setRegister(true);
             clients[i].setHasUsername(true);
-            std::cout << clients[i].getColor() << "Client [" << clients[i].getId() << "] changed his nickname to " << clients[i].getNickname() << std::endl;
             std::string result_str;
             oss << "\033[32m:ircserv : :ircserv USER created\033[0m" << std::endl;
             result_str = oss.str();
@@ -237,6 +236,36 @@ void    Server::authentication(char *buffer, int fd, size_t i, char *argv)
             return ;
         }
     }
+}
+
+size_t    Server::exist_nick(std::string nickname)
+{
+    for (size_t i = 0; i < clients.size(); i++)
+    {
+        if (clients[i].getNickname() == nickname)
+            return (i);
+    }
+    return (0);
+}
+
+void    Server::private_message(int i, char* buffer, int fd)
+{
+    std::istringstream  iss(buffer);
+    std::string premier, deuxieme, troisieme;
+    //PRIVMSG nickname "caca"
+    iss >> premier;
+    iss >> deuxieme;
+    iss >> troisieme;
+    if (clients[i].getHasRegister())
+    {
+        if (premier == "PRIVMSG")
+        {
+            if (exist_nick(deuxieme) && deuxieme != clients[i].getNickname())
+                send(clients[exist_nick(deuxieme)].getFd(), troisieme.c_str(), sizeof(troisieme), 0);
+        }
+        return ;
+    }
+    return ;
 }
 
 std::string Server::getBackgroundColorCode(int socket)

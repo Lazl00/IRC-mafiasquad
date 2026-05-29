@@ -29,7 +29,7 @@ void handle_sig(int sig)
     if (g_serv)
     {
         close(g_serv->getServerFd());
-        g_serv->cul_de_walid();
+        g_serv->sig_handler();
     }
     exit(0);
 }

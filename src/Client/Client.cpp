@@ -6,7 +6,7 @@
 /*   By: wailas <wailas@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/06 15:28:39 by wailas            #+#    #+#             */
-/*   Updated: 2026/05/15 15:57:32 by wailas           ###   ########.fr       */
+/*   Updated: 2026/05/29 15:19:56 by wailas           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,6 +27,8 @@ Client::Client(int fd, int id, std::string color) : fd(fd), id(id), color(color)
     this->cfp.revents = 0;
     this->has_password = 0;
     this->has_register = 0;
+    this->has_nickname = 0;
+    this->has_user = 0;
     this->color = color;
     std::cout << color << "Client [" << this->id<< "] connecte"<< "\033[0m" << std::endl;
 }
