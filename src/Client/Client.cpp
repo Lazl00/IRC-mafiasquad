@@ -6,13 +6,14 @@
 /*   By: wailas <wailas@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/06 15:28:39 by wailas            #+#    #+#             */
-/*   Updated: 2026/05/29 15:19:56 by wailas           ###   ########.fr       */
+/*   Updated: 2026/06/09 14:42:20 by wailas           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../includes/Client.hpp"
 
 Client::Client() {};
+
 Client::~Client() {};
         
 Client::Client(int fd, int id, std::string color) : fd(fd), id(id), color(color)
@@ -93,6 +94,11 @@ std::string Client::getName() const
     return (this->username);
 }
 
+bool Client::getHasWelcome() const
+{
+    return (this->hasWelcome);
+}
+
 void Client::setCfp(struct pollfd newCfp)
 {
     cfp = newCfp;
@@ -147,4 +153,8 @@ void Client::setHasUsername(bool status)
 {
     this->has_user = status;
 }
-        
+
+void Client::setHasWelcome(bool status)
+{
+    this->hasWelcome = status;
+}

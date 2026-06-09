@@ -6,7 +6,7 @@
 /*   By: wailas <wailas@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/28 12:00:01 by wailas            #+#    #+#             */
-/*   Updated: 2026/05/29 16:30:00 by wailas           ###   ########.fr       */
+/*   Updated: 2026/06/09 17:38:00 by wailas           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,11 +55,12 @@ void    Server::init_server(int port)
         exit(1);
     }
 };
+
 void    Server::sig_handler()
 {
-    std::cout << "cul de waild ;oisi qui transpire comme une grosse merde remplie de merde pute de grosser merde qui pue la merde" << std::endl;
     fds.clear();
 }
+
 void    Server::init_poll(char *av)
 {
     struct pollfd   serveur_fd_poll;
@@ -84,7 +85,6 @@ void    Server::init_poll(char *av)
             clientColor = getBackgroundColorCode(this->next_id);
             Client client(fd, this->next_id++, clientColor);
             this->clients.push_back(client); 
-            std::cout << "astaghfirullah" << std::endl;
             this->fds.push_back(client.getCfp());
             msg =
             
@@ -102,6 +102,7 @@ void    Server::init_poll(char *av)
                 int result;
                 memset(buffer, 0, sizeof(buffer));
                 result = recv(fds[i].fd, buffer, sizeof(buffer), 0);
+                std::cout << "recv from fd " << fds[i].fd << " -> [" << buffer << "]" << std::endl;
                 if (result < 0)
                 {
                     perror("funtion recv got an error");
@@ -119,6 +120,7 @@ void    Server::init_poll(char *av)
                     authentication(buffer, fds[i].fd, i - 1, av);
                     check_register(fds[i].fd, i - 1);
                     private_message(i - 1, buffer, fds[0].fd);
+                    Create_channel(buffer, clients[i - 1]);
                 }
             }
         }
@@ -137,17 +139,17 @@ int     Server::getServerFd() const
 
 void    Server::check_register(int fd, size_t i)
 {
-    std::cout << "j'ai valide pour le moment : " << clients[i].getHasRegister()
-        << clients[i].getHasPassword()
-        << clients[i].getHasNickname()
-        << clients[i].getHasUser()<< std::endl;
+    // std::cout << "j'ai valide pour le moment : " << clients[i].getHasRegister()
+    //     << clients[i].getHasPassword()
+    //     << clients[i].getHasNickname()
+    //     << clients[i].getHasUser()<< std::endl;
     if (clients[i].getHasRegister()
         && clients[i].getHasPassword()
         && clients[i].getHasNickname()
-        && clients[i].getHasUser())
+        && clients[i].getHasUser()
+        && !clients[i].getHasWelcome())
     {
-        clients[i].setRegister(true);
-
+        clients[i].setHasWelcome(true);
         std::string msg =
             ":ircserv 001 " + clients[i].getNickname() +
             " :Welcome to the IRC server\r\n";
@@ -225,7 +227,6 @@ void    Server::authentication(char *buffer, int fd, size_t i, char *argv)
                 return ;
             clients[i].setUsername(char_1);
             clients[i].setRealname(remains);
-            clients[i].setRegister(true);
             clients[i].setHasUsername(true);
             std::string result_str;
             oss << "\033[32m:ircserv : :ircserv USER created\033[0m" << std::endl;
@@ -248,24 +249,40 @@ size_t    Server::exist_nick(std::string nickname)
     return (0);
 }
 
-void    Server::private_message(int i, char* buffer, int fd)
+void Server::private_message(int i, char* buffer, int fd)
 {
-    std::istringstream  iss(buffer);
-    std::string premier, deuxieme, troisieme;
-    //PRIVMSG nickname "caca"
-    iss >> premier;
-    iss >> deuxieme;
-    iss >> troisieme;
+    std::istringstream iss(buffer);
+
+    std::string cmd;
+    std::string target;
+    std::string msg;
+    std::string final_msg;
+
+    iss >> cmd;
+    iss >> target;
+
+    std::getline(iss, msg);
+
+    if (!msg.empty() && msg[0] == ' ')
+        msg.erase(0, 1);
+
     if (clients[i].getHasRegister())
     {
-        if (premier == "PRIVMSG")
+        if (cmd == "PRIVMSG")
         {
-            if (exist_nick(deuxieme) && deuxieme != clients[i].getNickname())
-                send(clients[exist_nick(deuxieme)].getFd(), troisieme.c_str(), sizeof(troisieme), 0);
+            size_t target_index = exist_nick(target);
+
+            if (target_index != clients.size())
+            {
+                final_msg = ":" + clients[i].getNickname()+ " PRIVMSG "+ target+ " :"+ msg+ "\r\n";
+
+                send(clients[target_index].getFd(),
+                     final_msg.c_str(),
+                     final_msg.size(),
+                     0);
+            }
         }
-        return ;
     }
-    return ;
 }
 
 std::string Server::getBackgroundColorCode(int socket)
@@ -277,4 +294,16 @@ std::string Server::getBackgroundColorCode(int socket)
 
 	color << "\033[1;97;" << colorCode << "m";
 	return (color.str());
+}
+
+Channel* Server::getChannel(const std::string &name)
+{
+    std::map<std::string, Channel *>::iterator it;
+    
+    it = channel.find(name);
+    if (it != channel.end())
+    {
+        return (it->second);
+    }
+    return (NULL);
 }

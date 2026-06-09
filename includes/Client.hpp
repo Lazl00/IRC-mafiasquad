@@ -18,6 +18,7 @@ class Client
         bool            has_nickname;
         bool            has_user;
         bool            has_register;
+        bool            hasWelcome;
     public:
         Client();
         Client(int fd, int id, std::string color);
@@ -33,6 +34,7 @@ class Client
         bool getHasPassword() const;
         bool getHasNickname() const;
         bool getHasUser() const;
+        bool getHasWelcome() const;
         bool getHasRegister() const;
         std::string getColor() const;
 
@@ -45,6 +47,7 @@ class Client
         void setHasPassword(bool status);
         void setHasNickname(bool status);
         void setHasUsername(bool status);
+        void setHasWelcome(bool status);
         void setNickname(const std::string& newNickname);
         void setRegister(bool status);
 };
