@@ -18,6 +18,7 @@
 #include <signal.h>
 #include "Server.hpp"
 #include "Client.hpp"
+#include <fcntl.h>
 
 void    handle_sig(int sig);
 

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: wailas <wailas@student.42.fr>              +#+  +:+       +#+        */
+/*   By: ainthana <ainthana@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/28 12:00:01 by wailas            #+#    #+#             */
-/*   Updated: 2026/06/09 17:38:00 by wailas           ###   ########.fr       */
+/*   Updated: 2026/06/10 12:29:38 by ainthana         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,26 +29,33 @@ void    Server::init_server(int port)
 
     opt = 1;
     serveur_fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (setsockopt(serveur_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
-    {
-        perror("error on setsockopt");
-        exit(1);
-    }
+    
     if (serveur_fd < 0)
     {
         perror("Error : socket server");
         exit(0);
     }
+    
+    if (setsockopt(serveur_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
+    {
+        perror("error on setsockopt");
+        exit(1);
+    }
+    
+    fcntl(serveur_fd, F_SETFL, O_NONBLOCK);
+    
     struct sockaddr_in addrServer;
     addrServer.sin_family = AF_INET;
     addrServer.sin_port = htons(port);
     addrServer.sin_addr.s_addr = INADDR_ANY;
     std::memset(&addrServer.sin_zero, 0, sizeof(addrServer.sin_zero));
+    
     if (bind(serveur_fd, (const sockaddr*)&addrServer, sizeof(addrServer)) == -1)
     {
         perror("Error on the binding Server");
         exit(1);
     };
+    
     if (listen(serveur_fd, 10) < 0)
     {
         perror("Error on the listening of the Server");
@@ -64,9 +71,9 @@ void    Server::sig_handler()
 void    Server::init_poll(char *av)
 {
     struct pollfd   serveur_fd_poll;
-    int             i;
+    // int             i;
 
-    i = 0;
+    // i = 0;
     serveur_fd_poll.fd = serveur_fd;
     serveur_fd_poll.events = POLLIN;
     serveur_fd_poll.revents = 0;
@@ -75,6 +82,7 @@ void    Server::init_poll(char *av)
     while (true)
     {
         poll(fds.data(), fds.size(), -1);
+        
         if (fds[0].revents & POLLIN)
         {
             int         fd;
@@ -82,6 +90,7 @@ void    Server::init_poll(char *av)
             std::string msg;
             
             fd = accept(this->serveur_fd, NULL, NULL);
+            fcntl(fd, F_SETFL, O_NONBLOCK);
             clientColor = getBackgroundColorCode(this->next_id);
             Client client(fd, this->next_id++, clientColor);
             this->clients.push_back(client); 
@@ -94,20 +103,24 @@ void    Server::init_poll(char *av)
             ":ircserv NOTICE AUTH :Use USER <username> 0 * :<realname> to register\r\n\033[0m";
             send(fd , msg.c_str(), msg.size(), 0);
         }
+        
         for (size_t i = 1; i < fds.size(); i++)
         {
             char buffer[1024];
             if (fds[i].revents & POLLIN)
             {
                 int result;
+                
                 memset(buffer, 0, sizeof(buffer));
                 result = recv(fds[i].fd, buffer, sizeof(buffer), 0);
                 std::cout << "recv from fd " << fds[i].fd << " -> [" << buffer << "]" << std::endl;
+                
                 if (result < 0)
                 {
                     perror("funtion recv got an error");
                     exit(0);
                 }
+                
                 else if (result == 0) {
                     std::cout << clients[i - 1].getColor() << "Client [" << clients[i - 1].getId() << "] disconnected\033[0m" << std::endl;
                     close(fds[i].fd);
@@ -115,6 +128,7 @@ void    Server::init_poll(char *av)
                     clients.erase(clients.begin() + i - 1);
                     i--;
                 }
+                
                 else {
                     std::cout << clients[i - 1].getColor() << "Client [" << clients[i - 1].getId() << "] sent message : " << buffer << "\033[0m" << std::endl;
                     authentication(buffer, fds[i].fd, i - 1, av);
@@ -171,6 +185,7 @@ void    Server::authentication(char *buffer, int fd, size_t i, char *argv)
     {
         iss >> message;
         iss >> remains;
+        
         if ((message == "PASS" || message == "pass") && clients[i].getHasPassword() == 0)
         {
             if (remains == argv) {
@@ -179,11 +194,13 @@ void    Server::authentication(char *buffer, int fd, size_t i, char *argv)
                 result = oss.str();
                 send(fd, result.c_str(), result.size(), 0);
             }
+            
             else {
                 oss << "\033[31m:ircserv ERROR :Password incorrect\033[0m" << std::endl;
                 result = oss.str();
                 send(fd, result.c_str(), result.size() ,0);
             }
+            
             return ;
         }
         if (message == "NICK" || message == "nick")
@@ -194,6 +211,7 @@ void    Server::authentication(char *buffer, int fd, size_t i, char *argv)
                 result_str = oss.str();
                 send(fd, result_str.c_str(), result_str.size(), 0);
             }
+            
             else {
                 clients[i].setNickname(remains);
                 clients[i].setHasNickname(true);
@@ -203,6 +221,7 @@ void    Server::authentication(char *buffer, int fd, size_t i, char *argv)
                 result_str = oss.str();
                 send(fd, result_str.c_str(), result_str.size(), 0);
             }
+            
             return ;
         }
         if (message == "USER" || message == "user")
@@ -217,14 +236,19 @@ void    Server::authentication(char *buffer, int fd, size_t i, char *argv)
             std::cout << "char_2 " << char_2 << std::endl;
             std::cout << "char_3 " << char_3 << std::endl;
             std::cout << "remains " << remains << std::endl;
+            
             if (char_1 == "")
                 return ;
+                
             if (char_2 == "")
                 return ;
+                
             if (char_3 == "")
                 return ;
+                
             if (remains == "")
                 return ;
+                
             clients[i].setUsername(char_1);
             clients[i].setRealname(remains);
             clients[i].setHasUsername(true);
@@ -232,8 +256,10 @@ void    Server::authentication(char *buffer, int fd, size_t i, char *argv)
             oss << "\033[32m:ircserv : :ircserv USER created\033[0m" << std::endl;
             result_str = oss.str();
             send(fd, result_str.c_str(), result_str.size(), 0);
+            
             if (clients[i].getHasPassword() && clients[i].getHasNickname() && clients[i].getHasUser())
                 clients[i].setRegister(1);
+                
             return ;
         }
     }
@@ -246,11 +272,13 @@ size_t    Server::exist_nick(std::string nickname)
         if (clients[i].getNickname() == nickname)
             return (i);
     }
+    
     return (0);
 }
 
 void Server::private_message(int i, char* buffer, int fd)
 {
+    (void)fd;
     std::istringstream iss(buffer);
 
     std::string cmd;
@@ -301,9 +329,11 @@ Channel* Server::getChannel(const std::string &name)
     std::map<std::string, Channel *>::iterator it;
     
     it = channel.find(name);
+    
     if (it != channel.end())
     {
         return (it->second);
     }
+    
     return (NULL);
 }

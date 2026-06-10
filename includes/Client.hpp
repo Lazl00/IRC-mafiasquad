@@ -19,11 +19,13 @@ class Client
         bool            has_user;
         bool            has_register;
         bool            hasWelcome;
+
     public:
         Client();
         Client(int fd, int id, std::string color);
         ~Client();
 
+        //getter
         struct pollfd getCfp();
         struct pollfd getCfp() const;
         std::string getNickname() const;
@@ -38,6 +40,7 @@ class Client
         bool getHasRegister() const;
         std::string getColor() const;
 
+        //setter
         void setCfp(struct pollfd newCfp);
         void setBuffer(const std::string& newBuffer);
         void setId(int newId);

@@ -1,25 +1,45 @@
-NAME = ircserv
+# ================== VARIABLES ================== #
 
-CC = c++
-CFLAGS = -Wall -Wextra -Werror -std=c++98
+NAME        = ircserv
+CC          = c++
+CFLAGS      = -Wall -Wextra -Werror -std=c++98
+RM          = rm -rf
 
-SRCS = main.cpp \
-		src/Server/Server.cpp \
-		src/Client/Client.cpp \
-		src/Channel/Channel.cpp \
+SRCS        = main.cpp \
+              src/Server/Server.cpp \
+              src/Client/Client.cpp \
+              src/Channel/Channel.cpp
 
-OBJS = $(SRCS:.cpp=.o)
+DIR_OBJS    = objs
+OBJS        = $(SRCS:%.cpp=$(DIR_OBJS)/%.o)
 
-all : $(NAME)
+# ================== COLORS ================== #
+
+RED         = \033[0;31m
+GREEN       = \033[0;32m
+YELLOW      = \033[0;33m
+RESET       = \033[0m
+
+# ================== RULES ================== #
+
+all: $(NAME)
 
 $(NAME): $(OBJS)
-		$(CC) $(CFLAGS) -o $(NAME) $(OBJS)
+	@$(CC) $(CFLAGS) $(OBJS) -o $(NAME)
+	@printf "$(GREEN)✓ $(NAME) compilé avec succès$(RESET)\n"
+
+$(DIR_OBJS)/%.o: %.cpp
+	@mkdir -p $(dir $@)
+	@printf "$(YELLOW)Compilation de $<...$(RESET)\n"
+	@$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-		rm -f $(OBJS)
+	@$(RM) $(DIR_OBJS)
+	@printf "$(RED)Suppression des objets$(RESET)\n"
 
 fclean: clean
-		rm -f $(NAME)
+	@$(RM) $(NAME)
+	@printf "$(RED)Suppression de $(NAME)$(RESET)\n"
 
 re: fclean all
 

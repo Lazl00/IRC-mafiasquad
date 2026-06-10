@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Channel.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: wailas <wailas@student.42.fr>              +#+  +:+       +#+        */
+/*   By: ainthana <ainthana@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/08 12:35:32 by wailas            #+#    #+#             */
-/*   Updated: 2026/06/09 17:57:27 by wailas           ###   ########.fr       */
+/*   Updated: 2026/06/10 12:06:29 by ainthana         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,6 +62,7 @@ std::vector<Client*> Channel::getMembers()
 void    Server::Broadcast(Channel *chan, std::string msg)
 {
     std::vector<Client*> members = chan->getMembers();
+    
     for (size_t i = 0; i != members.size(); i++)
     {
         send(clients[i].getFd(), msg.c_str(), sizeof(msg), 0);

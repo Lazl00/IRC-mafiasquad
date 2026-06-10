@@ -8,6 +8,7 @@ class Channel
         std::string          _name;
         std::vector<Client*> _members;
         std::vector<Client*> _operator;
+		
     public:
         Channel();
         ~Channel();
@@ -22,11 +23,12 @@ class Channel
 class Server
 {
     private:
-        int                         serveur_fd;
-        std::vector<struct pollfd>  fds;
-        std::vector<Client>         clients;
-        std::map<std::string, Channel*>        channel;
-        int                         next_id;
+        int										serveur_fd;
+        std::vector<struct pollfd>				fds;
+        std::vector<Client>						clients;
+        std::map<std::string, Channel*>			channel;
+        int										next_id;
+
     public:
         Server();
         ~Server();

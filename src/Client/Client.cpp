@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: wailas <wailas@student.42.fr>              +#+  +:+       +#+        */
+/*   By: ainthana <ainthana@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/06 15:28:39 by wailas            #+#    #+#             */
-/*   Updated: 2026/06/09 14:42:20 by wailas           ###   ########.fr       */
+/*   Updated: 2026/06/10 12:30:56 by ainthana         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,7 @@ Client::Client() {};
 
 Client::~Client() {};
         
-Client::Client(int fd, int id, std::string color) : fd(fd), id(id), color(color)
+Client::Client(int fd, int id, std::string color) : id(id), fd(fd), color(color)
 {
     this->id = id;
     this->buffer = "";

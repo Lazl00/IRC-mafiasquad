@@ -13,7 +13,9 @@ int main(int ac, char **av)
         std::cerr << "Usage: ./ircserv <port> <password>" << std::endl;
         return 1;
     }
+
     signal(SIGINT, handle_sig);
+    signal(SIGPIPE, SIG_IGN);
     port = atoi(av[1]);
     Serv.init_server(port);
     std::cout << "Server listening on port " << port << std::endl;
@@ -26,10 +28,12 @@ void handle_sig(int sig)
 {
     (void)sig;
     std::cout << "\nServer Down" << std::endl;
+
     if (g_serv)
     {
         close(g_serv->getServerFd());
         g_serv->sig_handler();
     }
+    
     exit(0);
 }
