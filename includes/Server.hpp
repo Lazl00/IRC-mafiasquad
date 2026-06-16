@@ -45,4 +45,5 @@ class Server
         std::vector<struct pollfd> getFds() const;
         void        check_register(int fd, size_t i);
         Channel*    getChannel(const std::string &name);
+		void		parse_token(char *buffer, int result, int index, char *av);
 };
