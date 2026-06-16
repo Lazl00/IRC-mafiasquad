@@ -19,6 +19,7 @@
 #include "Server.hpp"
 #include "Client.hpp"
 #include <fcntl.h>
+#include <stdio.h>
 
 void    handle_sig(int sig);
 
