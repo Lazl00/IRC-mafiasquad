@@ -15,7 +15,7 @@ class Channel
         Channel(std::string &name);
 
         std::vector<Client*> getMembers();
-        void    addMember(Client name);
+        void    addMember(Client *name);
         void    setName(std::string name);
         void    addOperator(Client* name);
 };

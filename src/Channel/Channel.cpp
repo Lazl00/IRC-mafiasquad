@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Channel.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ainthana <ainthana@student.42.fr>          +#+  +:+       +#+        */
+/*   By: wailas <wailas@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/08 12:35:32 by wailas            #+#    #+#             */
-/*   Updated: 2026/06/10 12:06:29 by ainthana         ###   ########.fr       */
+/*   Updated: 2026/06/16 14:22:19 by wailas           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,9 +21,9 @@ Channel::Channel(std::string &name)
 
 Channel::~Channel() {};
 
-void Channel::addMember(Client name)
+void Channel::addMember(Client *name)
 {
-    _members.push_back(&name);
+    _members.push_back(name);
 }
 
 void    Channel::setName(std::string name)
@@ -51,7 +51,7 @@ void Server::Create_channel(char *buffer, Client &client)
         channel[channelName] = chan;
         chan->addOperator(&client);
     }
-    chan->addMember(client);
+    chan->addMember(&client);
 }
 
 std::vector<Client*> Channel::getMembers()
