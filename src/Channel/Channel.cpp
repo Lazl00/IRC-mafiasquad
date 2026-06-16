@@ -6,7 +6,7 @@
 /*   By: wailas <wailas@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/08 12:35:32 by wailas            #+#    #+#             */
-/*   Updated: 2026/06/16 14:22:19 by wailas           ###   ########.fr       */
+/*   Updated: 2026/06/16 15:14:04 by wailas           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,7 +65,7 @@ void    Server::Broadcast(Channel *chan, std::string msg)
     
     for (size_t i = 0; i != members.size(); i++)
     {
-        send(clients[i].getFd(), msg.c_str(), sizeof(msg), 0);
+        send(members[i]->getFd(), msg.c_str(), msg.size(), 0);
     }
 }
 

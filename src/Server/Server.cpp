@@ -6,7 +6,7 @@
 /*   By: wailas <wailas@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/28 12:00:01 by wailas            #+#    #+#             */
-/*   Updated: 2026/06/16 14:12:44 by wailas           ###   ########.fr       */
+/*   Updated: 2026/06/16 16:13:34 by wailas           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -186,6 +186,12 @@ void    Server::authentication(char *buffer, int fd, size_t i, char *argv)
         iss >> message;
         iss >> remains;
         
+        if (message == "CAP")
+        {
+            std::string cap_end = ":ircserv CAP * END\r\n";
+            send(fd, cap_end.c_str(), cap_end.size(), 0);
+            return ;
+        }
         if ((message == "PASS" || message == "pass") && clients[i].getHasPassword() == 0)
         {
             if (remains == argv) {
@@ -309,6 +315,26 @@ void Server::private_message(int i, char* buffer, int fd)
                      final_msg.size(),
                      0);
             }
+            else if (getChannel(target) != NULL)
+            {
+                Channel *chan = getChannel(target);
+                std::vector<Client*> members = chan->getMembers();
+                
+                final_msg = ":" + clients[i].getNickname()+ " PRIVMSG "+ target+ " :"+ msg+ "\r\n";
+
+                for (size_t j = 0; j < members.size(); j++)
+                {
+                    if (members[j]->getFd() != clients[i].getFd()) // évite de renvoyer au sender
+                    {
+                        send(
+                            members[j]->getFd(),
+                            final_msg.c_str(),
+                            final_msg.size(),
+                            0
+                        );
+                    }
+                }
+            }
         }
     }
 }
@@ -334,6 +360,5 @@ Channel* Server::getChannel(const std::string &name)
     {
         return (it->second);
     }
-    
     return (NULL);
 }
