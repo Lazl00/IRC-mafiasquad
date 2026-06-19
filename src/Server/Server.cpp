@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: wailas <wailas@student.42.fr>              +#+  +:+       +#+        */
+/*   By: ainthana <ainthana@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/28 12:00:01 by wailas            #+#    #+#             */
-/*   Updated: 2026/06/16 16:13:34 by wailas           ###   ########.fr       */
+/*   Updated: 2026/06/19 15:51:51 by ainthana         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -130,11 +130,7 @@ void    Server::init_poll(char *av)
                 }
                 
                 else {
-                    std::cout << clients[i - 1].getColor() << "Client [" << clients[i - 1].getId() << "] sent message : " << buffer << "\033[0m" << std::endl;
-                    authentication(buffer, fds[i].fd, i - 1, av);
-                    check_register(fds[i].fd, i - 1);
-                    private_message(i - 1, buffer, fds[0].fd);
-                    Create_channel(buffer, clients[i - 1]);
+                    parse_token(buffer,result, i - 1, av);
                 }
             }
         }
@@ -173,7 +169,7 @@ void    Server::check_register(int fd, size_t i)
     }
 }
 
-void    Server::authentication(char *buffer, int fd, size_t i, char *argv)
+void    Server::authentication(const char *buffer, int fd, size_t i, char *argv)
 {
     std::ostringstream  oss;
     std::istringstream  iss(buffer);
@@ -282,7 +278,7 @@ size_t    Server::exist_nick(std::string nickname)
     return (0);
 }
 
-void Server::private_message(int i, char* buffer, int fd)
+void Server::private_message(int i, const char* buffer, int fd)
 {
     (void)fd;
     std::istringstream iss(buffer);

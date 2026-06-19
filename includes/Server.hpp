@@ -32,14 +32,14 @@ class Server
     public:
         Server();
         ~Server();
-        void        Create_channel(char *buffer, Client &client);
+        void        Create_channel(const char *buffer, Client &client);
         void        Broadcast(Channel *chan, std::string msg);
         void        sig_handler();
         void        init_server(int port);
         int         getServerFd() const;
         void        init_poll(char *av);
-        void        authentication(char *buffer, int fd, size_t i, char *av);
-        void        private_message(int i, char *buffer, int fd);
+        void        authentication(const char *buffer, int fd, size_t i, char *av);
+        void        private_message(int i, const char *buffer, int fd);
         size_t      exist_nick(std::string nickname);
         std::string getBackgroundColorCode(int socket);
         std::vector<struct pollfd> getFds() const;

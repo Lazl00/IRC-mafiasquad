@@ -6,7 +6,7 @@ CFLAGS      = -Wall -Wextra -Werror -std=c++98
 RM          = rm -rf
 
 SRCS        = main.cpp \
-              src/Server/Server.cpp \
+              src/Server/Server.cpp src/Server/Parse_serv.cpp \
               src/Client/Client.cpp \
               src/Channel/Channel.cpp
 

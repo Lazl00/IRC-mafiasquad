@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Channel.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: wailas <wailas@student.42.fr>              +#+  +:+       +#+        */
+/*   By: ainthana <ainthana@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/08 12:35:32 by wailas            #+#    #+#             */
-/*   Updated: 2026/06/16 15:14:04 by wailas           ###   ########.fr       */
+/*   Updated: 2026/06/19 15:48:42 by ainthana         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,7 +31,7 @@ void    Channel::setName(std::string name)
     this->_name = name;
 }
 
-void Server::Create_channel(char *buffer, Client &client)
+void Server::Create_channel(const char *buffer, Client &client)
 {
     std::istringstream  iss(buffer);
     std::string         cmd, channelName;
