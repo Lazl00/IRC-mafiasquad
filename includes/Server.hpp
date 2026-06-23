@@ -20,6 +20,21 @@ class Channel
         void    addOperator(Client* name);
 };
 
+class Bot
+{
+    private:
+        int         _sock;
+        std::string _recvBuffer;
+        std::string _password;
+        std::string _nickname;
+    public:
+        Bot(const std::string& password, const std::string& nickname);
+        ~Bot();
+
+        void command_bot(int socket_fd_serv, char *buffer, char *mdp);
+
+};
+
 class Server
 {
     private:
@@ -28,6 +43,7 @@ class Server
         std::vector<Client>						clients;
         std::map<std::string, Channel*>			channel;
         int										next_id;
+        bool                                    _flagBot;
 
     public:
         Server();
@@ -45,4 +61,5 @@ class Server
         std::vector<struct pollfd> getFds() const;
         void        check_register(int fd, size_t i);
         Channel*    getChannel(const std::string &name);
+        void        command_bot(int socket_fd_serv, char *buffer, char *mdp);
 };
