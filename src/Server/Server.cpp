@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: walidailas <walidailas@student.42.fr>      +#+  +:+       +#+        */
+/*   By: ainthana <ainthana@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/28 12:00:01 by wailas            #+#    #+#             */
-/*   Updated: 2026/06/23 16:08:09 by walidailas       ###   ########.fr       */
+/*   Updated: 2026/06/23 16:33:32 by ainthana         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -147,23 +147,18 @@ int     Server::getServerFd() const
     return (this->serveur_fd);
 }
 
-void    Server::check_register(int fd, size_t i)
+void Server::check_register(int fd, size_t i)
 {
-    // std::cout << "j'ai valide pour le moment : " << clients[i].getHasRegister()
-    //     << clients[i].getHasPassword()
-    //     << clients[i].getHasNickname()
-    //     << clients[i].getHasUser()<< std::endl;
-    if (clients[i].getHasRegister()
-        && clients[i].getHasPassword()
+    if (clients[i].getHasPassword()
         && clients[i].getHasNickname()
         && clients[i].getHasUser()
         && !clients[i].getHasWelcome())
     {
+        clients[i].setRegister(1);
         clients[i].setHasWelcome(true);
         std::string msg =
             ":ircserv 001 " + clients[i].getNickname() +
             " :Welcome to the IRC server\r\n";
-
         send(fd, msg.c_str(), msg.size(), 0);
         return;
     }
@@ -253,14 +248,6 @@ void    Server::authentication(const char *buffer, int fd, size_t i, char *argv)
             clients[i].setUsername(char_1);
             clients[i].setRealname(remains);
             clients[i].setHasUsername(true);
-            std::string result_str;
-            oss << "\033[32m:ircserv : :ircserv USER created\033[0m" << std::endl;
-            result_str = oss.str();
-            send(fd, result_str.c_str(), result_str.size(), 0);
-            
-            if (clients[i].getHasPassword() && clients[i].getHasNickname() && clients[i].getHasUser())
-                clients[i].setRegister(1);
-                
             return ;
         }
     }
