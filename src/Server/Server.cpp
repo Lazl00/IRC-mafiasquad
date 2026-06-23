@@ -6,7 +6,7 @@
 /*   By: ainthana <ainthana@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/28 12:00:01 by wailas            #+#    #+#             */
-/*   Updated: 2026/06/23 16:45:25 by ainthana         ###   ########.fr       */
+/*   Updated: 2026/06/24 00:25:56 by ainthana         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -71,9 +71,6 @@ void    Server::sig_handler()
 void    Server::init_poll(char *av)
 {
     struct pollfd   serveur_fd_poll;
-    // int             i;
-
-    // i = 0;
     serveur_fd_poll.fd = serveur_fd;
     serveur_fd_poll.events = POLLIN;
     serveur_fd_poll.revents = 0;
@@ -87,7 +84,6 @@ void    Server::init_poll(char *av)
         {
             int         fd;
             std::string clientColor;
-            std::string msg;
             
             fd = accept(this->serveur_fd, NULL, NULL);
             fcntl(fd, F_SETFL, O_NONBLOCK);
@@ -95,13 +91,6 @@ void    Server::init_poll(char *av)
             Client client(fd, this->next_id++, clientColor);
             this->clients.push_back(client); 
             this->fds.push_back(client.getCfp());
-            msg =
-            
-            "\033[36m:ircserv NOTICE AUTH :Welcome to ircserv!\r\n"
-            ":ircserv NOTICE AUTH :Use PASS <password> to authenticate\r\n"
-            ":ircserv NOTICE AUTH :Use NICK <nickname> to choose a nickname\r\n"
-            ":ircserv NOTICE AUTH :Use USER <username> 0 * :<realname> to register\r\n\033[0m";
-            send(fd , msg.c_str(), msg.size(), 0);
         }
         
         for (size_t i = 1; i < fds.size(); i++)
@@ -113,7 +102,6 @@ void    Server::init_poll(char *av)
                 
                 memset(buffer, 0, sizeof(buffer));
                 result = recv(fds[i].fd, buffer, sizeof(buffer), 0);
-                std::cout << "recv from fd " << fds[i].fd << " -> [" << buffer << "]" << std::endl;
                 
                 if (result < 0)
                 {
@@ -282,11 +270,14 @@ void Server::private_message(int i, const char* buffer, int fd)
     if (!msg.empty() && msg[0] == ' ')
         msg.erase(0, 1);
 
+    if (!msg.empty() && msg[0] == ':')   // ← retire le : du début
+        msg.erase(0, 1);
+
     if (clients[i].getHasRegister())
     {
         if (cmd == "PRIVMSG")
         {
-            size_t target_index = exist_nick(target);
+            size_t target_index = find_client_by_nick(target);
 
             if (target_index != clients.size())
             {
@@ -343,4 +334,12 @@ Channel* Server::getChannel(const std::string &name)
         return (it->second);
     }
     return (NULL);
+}
+
+size_t  Server::find_client_by_nick(std::string nickname) {
+    
+    for (size_t i = 0; i < clients.size(); i++)
+        if (clients[i].getNickname() == nickname)
+            return (i);
+    return (clients.size());
 }

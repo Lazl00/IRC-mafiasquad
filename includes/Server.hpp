@@ -72,4 +72,5 @@ class Server
         bool                        is_valid_nick(std::string nick);
         std::string	                read_code(int code, std::string target, std::string params, std::string msg);
         void                        change_nick(const char *buffer, int fd, size_t i);
+        size_t						find_client_by_nick(std::string nickname);
 };
