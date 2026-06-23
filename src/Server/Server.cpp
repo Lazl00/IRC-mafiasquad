@@ -6,7 +6,7 @@
 /*   By: ainthana <ainthana@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/28 12:00:01 by wailas            #+#    #+#             */
-/*   Updated: 2026/06/19 15:51:51 by ainthana         ###   ########.fr       */
+/*   Updated: 2026/06/23 15:06:34 by ainthana         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -171,111 +171,105 @@ void    Server::check_register(int fd, size_t i)
 
 void    Server::authentication(const char *buffer, int fd, size_t i, char *argv)
 {
-    std::ostringstream  oss;
-    std::istringstream  iss(buffer);
-    std::string         result;
-    std::string         message, remains;
 
-    // faut faire ici le parsing les petits potes
     if (!clients[i].getHasRegister())
     {
-        iss >> message;
-        iss >> remains;
-        
-        if (message == "CAP")
+        t_message msg = parse_message(buffer);
+        std::string target = clients[i].getNickname();
+        if (target.empty())
+            target = "*";
+
+        if (msg.command == "CAP")
         {
-            std::string cap_end = ":ircserv CAP * END\r\n";
-            send(fd, cap_end.c_str(), cap_end.size(), 0);
+            std::string cap_reply = "CAP * LS :\r\n";
+            send(fd, cap_reply.c_str(), cap_reply.size(), 0);
             return ;
         }
-        if ((message == "PASS" || message == "pass") && clients[i].getHasPassword() == 0)
+
+        if ((msg.command == "PASS" || msg.command == "pass") && clients[i].getHasPassword() == 0)
         {
-            if (remains == argv) {
+            if (msg.params.empty())
+            {
+                std::string result = read_code(461, target, "PASS", "Not enough parameters");
+                send(fd, result.c_str(), result.size(), 0);
+                return ;
+            }
+            
+            if (msg.params[0] == argv)
+            {
                 clients[i].setHasPassword(1);
-                oss << "\033[32m:ircserv : Password accepted\033[0m" << std::endl;
-                result = oss.str();
+            }
+            
+            else
+            {
+                std::string result = read_code(464, target, "", "Password incorrect");
                 send(fd, result.c_str(), result.size(), 0);
             }
-            
-            else {
-                oss << "\033[31m:ircserv ERROR :Password incorrect\033[0m" << std::endl;
-                result = oss.str();
-                send(fd, result.c_str(), result.size() ,0);
-            }
-            
             return ;
         }
-        if (message == "NICK" || message == "nick")
+
+        if (!clients[i].getHasPassword())
         {
-            if (remains == "") {
-                std::string result_str;
-                oss << "\033[31m:ircserv ERROR : there's no nickname to change\033[0m" << std::endl;
-                result_str = oss.str();
-                send(fd, result_str.c_str(), result_str.size(), 0);
-            }
-            
-            else {
-                clients[i].setNickname(remains);
-                clients[i].setHasNickname(true);
-                std::cout << clients[i].getColor() << "Client [" << clients[i].getId() << "] changed his nickname to " << clients[i].getNickname() << std::endl;
-                std::string result_str;
-                oss << "\033[32m:ircserv : new nickname for your profil\033[0m" << std::endl;
-                result_str = oss.str();
-                send(fd, result_str.c_str(), result_str.size(), 0);
-            }
-            
+            std::string result = read_code(464, target, "", "Password required first");
+            send(fd, result.c_str(), result.size(), 0);
             return ;
         }
-        if (message == "USER" || message == "user")
+
+        if (msg.command == "NICK" || msg.command == "nick")
         {
-            std::string char_1, char_2, char_3;
-            iss >> char_1;
-            iss >> char_2;
-            iss >> char_3;
-            iss >> remains;
-            std::cout << "message " << message << std::endl;
-            std::cout << "char_1 " << char_1 << std::endl;
-            std::cout << "char_2 " << char_2 << std::endl;
-            std::cout << "char_3 " << char_3 << std::endl;
-            std::cout << "remains " << remains << std::endl;
+            if (msg.params.empty())
+            {    
+                std::string result = read_code(431, target, "", "No nickname given");
+                send(fd, result.c_str(), result.size(), 0);
+                return ;
+            }
+
+            if (!is_valid_nick(msg.params[0]))
+            {
+                std::string result = read_code(432, target, msg.params[0], "Erroneous nickname");
+                send(fd, result.c_str(), result.size(), 0);
+                return ;
+            }
             
-            if (char_1 == "")
+            if (exist_nick(msg.params[0]))
+            {
+                std::string result = read_code(433, target, msg.params[0], "Nickname is already in use");
+                send(fd, result.c_str(), result.size(), 0);
                 return ;
-                
-            if (char_2 == "")
+            }
+            
+            clients[i].setNickname(msg.params[0]);
+            clients[i].setHasNickname(true);
+            std::cout << clients[i].getColor() << "Client [" << clients[i].getId()
+                      << "] changed his nickname to " << clients[i].getNickname() << "\033[0m" << std::endl;
+            return ;
+        }
+
+        if (msg.command == "USER" || msg.command == "user")
+        {
+            if (msg.params.size() < 4)
+            {
+                std::string result = read_code(461, target, "USER", "Not enough parameters");
+                send(fd, result.c_str(), result.size(), 0);
                 return ;
-                
-            if (char_3 == "")
-                return ;
-                
-            if (remains == "")
-                return ;
-                
-            clients[i].setUsername(char_1);
-            clients[i].setRealname(remains);
+            }
+            clients[i].setUsername(msg.params[0]);
+            clients[i].setRealname(msg.params[3]);
             clients[i].setHasUsername(true);
-            std::string result_str;
-            oss << "\033[32m:ircserv : :ircserv USER created\033[0m" << std::endl;
-            result_str = oss.str();
-            send(fd, result_str.c_str(), result_str.size(), 0);
-            
+
             if (clients[i].getHasPassword() && clients[i].getHasNickname() && clients[i].getHasUser())
                 clients[i].setRegister(1);
-                
             return ;
         }
     }
 }
 
-size_t    Server::exist_nick(std::string nickname)
+bool Server::exist_nick(std::string nickname)
 {
     for (size_t i = 0; i < clients.size(); i++)
-    {
         if (clients[i].getNickname() == nickname)
-            return (i);
-    }
-    
-    return (0);
+            return (true);
+    return (false);
 }
 
 void Server::private_message(int i, const char* buffer, int fd)

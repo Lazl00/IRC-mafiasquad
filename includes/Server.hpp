@@ -2,6 +2,12 @@
 #include "Client.hpp"
 #include <vector>
 
+struct t_message {
+
+    std::string                 command;
+    std::vector<std::string>    params;
+};
+
 class Channel
 {
     private: 
@@ -32,18 +38,22 @@ class Server
     public:
         Server();
         ~Server();
-        void        Create_channel(const char *buffer, Client &client);
-        void        Broadcast(Channel *chan, std::string msg);
-        void        sig_handler();
-        void        init_server(int port);
-        int         getServerFd() const;
-        void        init_poll(char *av);
-        void        authentication(const char *buffer, int fd, size_t i, char *av);
-        void        private_message(int i, const char *buffer, int fd);
-        size_t      exist_nick(std::string nickname);
-        std::string getBackgroundColorCode(int socket);
-        std::vector<struct pollfd> getFds() const;
-        void        check_register(int fd, size_t i);
-        Channel*    getChannel(const std::string &name);
-		void		parse_token(char *buffer, int result, int index, char *av);
+        void                        Create_channel(const char *buffer, Client &client);
+        void                        Broadcast(Channel *chan, std::string msg);
+        void                        sig_handler();
+        void                        init_server(int port);
+        int                         getServerFd() const;
+        void                        init_poll(char *av);
+        void                        authentication(const char *buffer, int fd, size_t i, char *av);
+        void                        private_message(int i, const char *buffer, int fd);
+        bool                        exist_nick(std::string nickname);
+        std::string                 getBackgroundColorCode(int socket);
+        std::vector<struct pollfd>  getFds() const;
+        void                        check_register(int fd, size_t i);
+        Channel*                    getChannel(const std::string &name);
+		void		                parse_token(char *buffer, int result, int index, char *av);
+        t_message                   parse_message(const std::string &line);
+        bool                        is_valid_nick(std::string nick);
+        std::string	                read_code(int code, std::string target, std::string params, std::string msg);
+        void                        change_nick(const char *buffer, int fd, size_t i);
 };
