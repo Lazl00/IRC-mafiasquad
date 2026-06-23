@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ainthana <ainthana@student.42.fr>          +#+  +:+       +#+        */
+/*   By: walidailas <walidailas@student.42.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/28 12:00:01 by wailas            #+#    #+#             */
-/*   Updated: 2026/06/19 15:51:51 by ainthana         ###   ########.fr       */
+/*   Updated: 2026/06/23 16:08:09 by walidailas       ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -176,7 +176,6 @@ void    Server::authentication(const char *buffer, int fd, size_t i, char *argv)
     std::string         result;
     std::string         message, remains;
 
-    // faut faire ici le parsing les petits potes
     if (!clients[i].getHasRegister())
     {
         iss >> message;
