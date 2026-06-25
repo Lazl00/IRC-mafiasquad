@@ -31,10 +31,13 @@ void	Server::parse_token(char *buffer, int result, int index, char *av)
 			{
 				private_message(index, cmd.c_str(), client_fd);
 				Create_channel(cmd.c_str(), clients[index]);
+                
 			}
 		}
     }
 }
+
+//MODE +tik Brawlhalla motdepasse 
 
 t_message	Server::parse_message(const std::string &line) {
 

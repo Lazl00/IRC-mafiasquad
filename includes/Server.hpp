@@ -10,20 +10,32 @@ struct t_message {
 
 class Channel
 {
-    private: 
-        std::string          _name;
-        std::vector<Client*> _members;
-        std::vector<Client*> _operator;
-		
+    private:
+        std::string              _name;
+        std::string              _topic;
+        std::vector<Client*>     _members;
+        std::vector<Client*>     _invited;
+        std::vector<Client*>     _operators;
+        bool _i;
+        bool _t;
+        bool _k;
+        bool _o;
+        bool _l;
+
     public:
         Channel();
         ~Channel();
         Channel(std::string &name);
-
-        std::vector<Client*> getMembers();
-        void    addMember(Client *name);
-        void    setName(std::string name);
-        void    addOperator(Client* name);
+        const std::string& getName() const;
+        const std::vector<Client*>& getMembers() const;
+        void addMember(Client *client);
+        void addOperator(Client *client);
+        void invite(Client *client);
+        void setName(std::string name);
+        void setTopic(std::string topic);
+        void seeTopic();
+        void mode(char cmd, std::string arg);
+        void kick(Client *client);
 };
 
 class Bot
