@@ -1,8 +1,8 @@
 #include "../../includes/irc.hpp"
 
-void	Server::parse_token(char *buffer, int result, int index, char *av)
+void Server::parse_token(char *buffer, int result, int index, char *av)
 {
-    clients[index].setBuffer(clients[index].getBuffer() + std::string(buffer, result));
+	clients[index].setBuffer(clients[index].getBuffer() + std::string(buffer, result));
 
     while (clients[index].getBuffer().find("\r\n") != std::string::npos)
     {
@@ -18,26 +18,48 @@ void	Server::parse_token(char *buffer, int result, int index, char *av)
         int client_fd = clients[index].getFd();
 		t_message msg = parse_message(cmd);
 
+		if (msg.command == "PING")
+		{
+			std::string pong = "PONG ";
+			if (!msg.params.empty())
+				pong += msg.params[0];
+			pong += "\r\n";
+			send(client_fd, pong.c_str(), pong.size(), 0);
+			continue ;
+		}
+
         if (!clients[index].getHasRegister())
         {
             authentication(cmd.c_str(), client_fd, index, av);
             check_register(client_fd, index);
         }
-		else
-		{
-			if (msg.command == "NICK")
-				change_nick(cmd.c_str(), client_fd, index);
-			else
-			{
-				private_message(index, cmd.c_str(), client_fd);
-				Create_channel(cmd.c_str(), clients[index]);
-                
-			}
-		}
+        else
+        {
+            if (msg.command == "NICK")
+                change_nick(cmd.c_str(), client_fd, index);
+            else if (msg.command == "PRIVMSG")
+                private_message(index, cmd.c_str(), client_fd);
+            else if (msg.command == "JOIN")
+                Create_channel(cmd.c_str(), clients[index]);
+            else if (msg.command == "KICK")
+            {
+                // funct KICK;
+            }
+            else if (msg.command == "INVITE")
+            {
+                // funct INVITE
+            }
+            else if (msg.command == "TOPIC")
+            {
+                // funct TOPIC;
+            }
+            else if (msg.command == "MODE")
+            {
+                // funct MODE;
+            }
+        }
     }
 }
-
-//MODE +tik Brawlhalla motdepasse 
 
 t_message	Server::parse_message(const std::string &line) {
 

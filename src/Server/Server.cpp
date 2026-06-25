@@ -6,7 +6,7 @@
 /*   By: ainthana <ainthana@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/28 12:00:01 by wailas            #+#    #+#             */
-/*   Updated: 2026/06/24 00:25:56 by ainthana         ###   ########.fr       */
+/*   Updated: 2026/06/25 17:09:49 by ainthana         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -164,8 +164,18 @@ void    Server::authentication(const char *buffer, int fd, size_t i, char *argv)
 
         if (msg.command == "CAP")
         {
-            std::string cap_reply = "CAP * LS :\r\n";
-            send(fd, cap_reply.c_str(), cap_reply.size(), 0);
+            if (!msg.params.empty() && msg.params[0] == "LS")
+            {
+                std::string r = "CAP * LS :\r\n";
+                send(fd, r.c_str(), r.size(), 0);
+            }
+            else if (!msg.params.empty() && msg.params[0] == "REQ")
+            {
+                // CAP REQ, pas besoin de gerer
+                std::string r = "CAP * NAK :\r\n";
+                send(fd, r.c_str(), r.size(), 0);
+            }
+            // CAP END, rien a faire
             return ;
         }
 

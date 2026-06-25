@@ -1,0 +1,39 @@
+# ─── Binaires compilés ────────────────────────────────────────────────────────
+ircserv
+*.out
+*.a
+*.so
+
+# ─── Fichiers objets et dépendances ───────────────────────────────────────────
+*.o
+*.d
+
+# ─── Valgrind ─────────────────────────────────────────────────────────────────
+vgcore.*
+core
+core.*
+
+# ─── macOS ────────────────────────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+
+# ─── Éditeurs ─────────────────────────────────────────────────────────────────
+# VSCode
+.vscode/
+
+# Neovim / Vim
+*.swp
+*.swo
+*~
+.nvim/
+
+# CLion / JetBrains
+.idea/
+cmake-build-*/
+
+# ─── Logs et fichiers temporaires ─────────────────────────────────────────────
+*.log
+*.tmp
