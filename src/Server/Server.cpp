@@ -6,7 +6,7 @@
 /*   By: ainthana <ainthana@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/28 12:00:01 by wailas            #+#    #+#             */
-/*   Updated: 2026/06/25 17:09:49 by ainthana         ###   ########.fr       */
+/*   Updated: 2026/06/30 15:30:43 by ainthana         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -266,56 +266,38 @@ void Server::private_message(int i, const char* buffer, int fd)
 {
     (void)fd;
     std::istringstream iss(buffer);
-
-    std::string cmd;
-    std::string target;
-    std::string msg;
-    std::string final_msg;
+    std::string cmd, target, msg, final_msg;
 
     iss >> cmd;
     iss >> target;
-
     std::getline(iss, msg);
 
     if (!msg.empty() && msg[0] == ' ')
         msg.erase(0, 1);
-
-    if (!msg.empty() && msg[0] == ':')   // ← retire le : du début
+    if (!msg.empty() && msg[0] == ':')
         msg.erase(0, 1);
 
     if (clients[i].getHasRegister())
     {
         if (cmd == "PRIVMSG")
         {
+            std::string prefix = clients[i].getNickname() + "!";
+                              
             size_t target_index = find_client_by_nick(target);
-
             if (target_index != clients.size())
             {
-                final_msg = ":" + clients[i].getNickname()+ " PRIVMSG "+ target+ " :"+ msg+ "\r\n";
-
-                send(clients[target_index].getFd(),
-                     final_msg.c_str(),
-                     final_msg.size(),
-                     0);
+                final_msg = ":" + prefix + " PRIVMSG " + target + " :" + msg + "\r\n";
+                send(clients[target_index].getFd(), final_msg.c_str(), final_msg.size(), 0);
             }
             else if (getChannel(target) != NULL)
             {
                 Channel *chan = getChannel(target);
                 std::vector<Client*> members = chan->getMembers();
-                
-                final_msg = ":" + clients[i].getNickname()+ " PRIVMSG "+ target+ " :"+ msg+ "\r\n";
-
+                final_msg = ":" + prefix + " PRIVMSG " + target + " :" + msg + "\r\n";
                 for (size_t j = 0; j < members.size(); j++)
                 {
-                    if (members[j]->getFd() != clients[i].getFd()) // évite de renvoyer au sender
-                    {
-                        send(
-                            members[j]->getFd(),
-                            final_msg.c_str(),
-                            final_msg.size(),
-                            0
-                        );
-                    }
+                    if (members[j]->getFd() != clients[i].getFd())
+                        send(members[j]->getFd(), final_msg.c_str(), final_msg.size(), 0);
                 }
             }
         }
