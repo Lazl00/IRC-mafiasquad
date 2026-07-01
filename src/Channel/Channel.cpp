@@ -6,7 +6,7 @@
 /*   By: ainthana <ainthana@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/08 12:35:32 by wailas            #+#    #+#             */
-/*   Updated: 2026/07/01 18:25:27 by ainthana         ###   ########.fr       */
+/*   Updated: 2026/07/01 18:31:17 by ainthana         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -93,6 +93,8 @@ void Server::Create_channel(const char *buffer, Client &client)
 
     std::string channelName = msg.params[0];
 	std::string key = "";
+
+	//Laslo tu mettra le mode +k dans cette fonction
 
 	if (msg.params.size() >= 2)
 		key = msg.params[1];
