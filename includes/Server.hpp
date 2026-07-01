@@ -50,8 +50,8 @@ class Bot
         Bot(const std::string& password, const std::string& nickname);
         ~Bot();
 
-        void command_bot(int socket_fd_serv, char *buffer, char *mdp);
-
+        bool    connect_to_server(const std::string& host, int port);
+        void    command_bot();
 };
 
 class Server
