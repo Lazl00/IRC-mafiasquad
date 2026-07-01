@@ -73,7 +73,7 @@ class Server
         int                         getServerFd() const;
         void                        init_poll(char *av);
         void                        authentication(const char *buffer, int fd, size_t i, char *av);
-        void                        private_message(int i, const char *buffer, int fd);
+        void                        private_message(int i, const char *buffer);
         bool                        exist_nick(std::string nickname);
         std::string                 getBackgroundColorCode(int socket);
         std::vector<struct pollfd>  getFds() const;

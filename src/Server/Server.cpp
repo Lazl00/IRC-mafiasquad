@@ -6,7 +6,7 @@
 /*   By: ainthana <ainthana@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/28 12:00:01 by wailas            #+#    #+#             */
-/*   Updated: 2026/06/30 15:30:43 by ainthana         ###   ########.fr       */
+/*   Updated: 2026/07/01 17:18:48 by ainthana         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -262,9 +262,8 @@ bool Server::exist_nick(std::string nickname)
     return (false);
 }
 
-void Server::private_message(int i, const char* buffer, int fd)
+void Server::private_message(int i, const char* buffer)
 {
-    (void)fd;
     std::istringstream iss(buffer);
     std::string cmd, target, msg, final_msg;
 
@@ -284,11 +283,13 @@ void Server::private_message(int i, const char* buffer, int fd)
             std::string prefix = clients[i].getNickname() + "!";
                               
             size_t target_index = find_client_by_nick(target);
+            
             if (target_index != clients.size())
             {
                 final_msg = ":" + prefix + " PRIVMSG " + target + " :" + msg + "\r\n";
                 send(clients[target_index].getFd(), final_msg.c_str(), final_msg.size(), 0);
             }
+
             else if (getChannel(target) != NULL)
             {
                 Channel *chan = getChannel(target);
@@ -299,6 +300,12 @@ void Server::private_message(int i, const char* buffer, int fd)
                     if (members[j]->getFd() != clients[i].getFd())
                         send(members[j]->getFd(), final_msg.c_str(), final_msg.size(), 0);
                 }
+            }
+
+            else
+            {
+                std::string err = read_code(401, clients[i].getNickname(), target, "No such nick/channel");
+                send(clients[i].getFd(), err.c_str(), err.length(), 0);
             }
         }
     }
