@@ -38,7 +38,7 @@ void Server::parse_token(char *buffer, int result, int index, char *av)
             if (msg.command == "NICK")
                 change_nick(cmd.c_str(), client_fd, index);
             else if (msg.command == "PRIVMSG")
-                private_message(index, cmd.c_str(), client_fd);
+                private_message(index, cmd.c_str());
             else if (msg.command == "JOIN")
                 Create_channel(cmd.c_str(), clients[index]);
             else if (msg.command == "KICK")

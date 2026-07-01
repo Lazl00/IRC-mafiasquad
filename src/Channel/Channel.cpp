@@ -6,7 +6,7 @@
 /*   By: ainthana <ainthana@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/08 12:35:32 by wailas            #+#    #+#             */
-/*   Updated: 2026/07/01 15:42:01 by ainthana         ###   ########.fr       */
+/*   Updated: 2026/07/01 18:25:27 by ainthana         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -79,21 +79,23 @@ void Channel::invite(Client* client)
 
 void Server::Create_channel(const char *buffer, Client &client)
 {
-    std::istringstream iss(buffer);
-    std::string cmd, channelName;
+    t_message msg = parse_message(buffer);
 
-    if (!(iss >> cmd) || !(iss >> channelName))
+    if (msg.command != "JOIN")
+        return;
+
+    if (msg.params.empty())
     {
-        if (cmd == "JOIN")
-        {
-            std::string err = read_code(461, client.getNickname(), "JOIN", "Not enough parameters");
-            send(client.getFd(), err.c_str(), err.length(), 0);
-        }
+        std::string err = read_code(461, client.getNickname(), "JOIN", "Not enough parameters");
+        send(client.getFd(), err.c_str(), err.length(), 0);
         return;
     }
-    
-    if (cmd != "JOIN")
-        return;
+
+    std::string channelName = msg.params[0];
+	std::string key = "";
+
+	if (msg.params.size() >= 2)
+		key = msg.params[1];
 
     if (!parse_channel(channelName))
     {
@@ -117,10 +119,10 @@ void Server::Create_channel(const char *buffer, Client &client)
         if (members[i] == &client)
             return;
     }
-
     chan->addMember(&client);
-    std::string msg = ":" + client.getNickname() + " JOIN " + channelName + "\r\n";
-    Broadcast(chan, msg);
+
+    std::string msg_final = ":" + client.getNickname() + " JOIN " + channelName + "\r\n";
+    Broadcast(chan, msg_final);
 }
 
 const std::vector<Client*>& Channel::getMembers() const
