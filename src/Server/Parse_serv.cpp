@@ -129,6 +129,42 @@ std::string	Server::read_code(int code, std::string target, std::string params, 
 	return oss.str();
 }
 
+void	Server::search_channel(std::string &old_nick, std::string &new_nick)
+{
+	std::set<Client*> ToNotify;
+	std::cout << "force" << std::endl;
+	std::map<std::string, Channel*>::iterator it = channel.begin();
+	for (; it != channel.end(); it++)
+	{
+		for (size_t i = 0; i < it->second->getMembers().size(); i++)
+		{
+			if (it->second->getMembers()[i]->getNickname() == old_nick)
+			{
+				for (size_t j = 0; j < it->second->getMembers().size(); j++)
+				{
+					ToNotify.insert(it->second->getMembers()[j]);
+				}
+			}
+		}
+	}
+	std::set<Client*>::iterator it_list = ToNotify.begin();
+	for (; it_list != ToNotify.end(); it_list++)
+	{
+		std::cout << "ce Client est un ami a :"<< (*it_list)->getNickname() << std::endl;
+	}
+	std::ostringstream	oss;
+	std::string			final_message;
+
+	std::cout << "forceX2" << std::endl;
+	oss << ":" << old_nick << " NICK :" << new_nick << "\r\n";
+	final_message = oss.str();
+	std::set<Client*>::iterator it_set = ToNotify.begin();
+	for (; it_set != ToNotify.end(); it_set++)
+	{
+		send((*it_set)->getFd(), final_message.c_str(), final_message.size(), 0);
+	}
+}
+
 void Server::change_nick(const char *buffer, int fd, size_t i)
 {
     t_message msg = parse_message(buffer);
@@ -154,6 +190,7 @@ void Server::change_nick(const char *buffer, int fd, size_t i)
     }
 
     std::string old_nick = clients[i].getNickname();
+	search_channel(old_nick, msg.params[0]);
     clients[i].setNickname(msg.params[0]);
 
     std::string notif = ":" + old_nick + " NICK :" + msg.params[0] + "\r\n";

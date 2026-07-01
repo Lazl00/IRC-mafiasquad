@@ -1,6 +1,7 @@
 #pragma once
 #include "Client.hpp"
 #include <vector>
+#include <set>
 
 struct t_message {
 
@@ -86,4 +87,5 @@ class Server
         void                        change_nick(const char *buffer, int fd, size_t i);
         size_t						find_client_by_nick(std::string nickname);
 		bool						parse_channel(const std::string &name);
+        void	                    search_channel(std::string &old_nick, std::string &new_nick);
 };
