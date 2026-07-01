@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Channel.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lcournoy <lcournoy@student.42.fr>          +#+  +:+       +#+        */
+/*   By: ainthana <ainthana@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/08 12:35:32 by wailas            #+#    #+#             */
-/*   Updated: 2026/06/25 15:15:35 by lcournoy         ###   ########.fr       */
+/*   Updated: 2026/07/01 15:42:01 by ainthana         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -82,25 +82,42 @@ void Server::Create_channel(const char *buffer, Client &client)
     std::istringstream iss(buffer);
     std::string cmd, channelName;
 
-    iss >> cmd;
-    iss >> channelName;
+    if (!(iss >> cmd) || !(iss >> channelName))
+    {
+        if (cmd == "JOIN")
+        {
+            std::string err = read_code(461, client.getNickname(), "JOIN", "Not enough parameters");
+            send(client.getFd(), err.c_str(), err.length(), 0);
+        }
+        return;
+    }
+    
     if (cmd != "JOIN")
         return;
+
+    if (!parse_channel(channelName))
+    {
+        std::string err = read_code(403, client.getNickname(), channelName, "No such channel");
+        send(client.getFd(), err.c_str(), err.length(), 0);
+        return;
+    }
+
     Channel *chan = getChannel(channelName);
     if (!chan)
     {
         std::cout << "Channel created: " << channelName << std::endl;
-
         chan = new Channel(channelName);
         channel[channelName] = chan;
         chan->addOperator(&client);
     }
+
     std::vector<Client*> members = chan->getMembers();
     for (size_t i = 0; i < members.size(); i++)
     {
         if (members[i] == &client)
             return;
     }
+
     chan->addMember(&client);
     std::string msg = ":" + client.getNickname() + " JOIN " + channelName + "\r\n";
     Broadcast(chan, msg);

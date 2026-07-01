@@ -163,3 +163,14 @@ void Server::change_nick(const char *buffer, int fd, size_t i)
               << "] changed nick from " << old_nick << " to " << msg.params[0]
               << "\033[0m" << std::endl;
 }
+
+bool Server::parse_channel(const std::string &name) {
+	
+    if (name.length() < 2 || name[0] != '#')
+        return false;
+
+    if (name.find_first_of(" ,\r\n\t") != std::string::npos)
+        return false;
+
+    return true;
+}
