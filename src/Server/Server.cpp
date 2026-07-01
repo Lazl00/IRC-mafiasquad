@@ -6,7 +6,7 @@
 /*   By: ainthana <ainthana@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/28 12:00:01 by wailas            #+#    #+#             */
-/*   Updated: 2026/07/01 17:18:48 by ainthana         ###   ########.fr       */
+/*   Updated: 2026/07/01 23:38:56 by ainthana         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -264,49 +264,59 @@ bool Server::exist_nick(std::string nickname)
 
 void Server::private_message(int i, const char* buffer)
 {
-    std::istringstream iss(buffer);
-    std::string cmd, target, msg, final_msg;
+    t_message   msg = parse_message(buffer);
 
-    iss >> cmd;
-    iss >> target;
-    std::getline(iss, msg);
+    if (msg.command != "PRIVMSG")
+		return;
+	
+	if (msg.params.empty())
+	{
+		std::string err = read_code(411, clients[i].getNickname(), "", "No recipient given (PRIVMSG)");
+		send(clients[i].getFd(), err.c_str(), err.length(), 0);
+		return;
+	}
+	if (msg.params.size() < 2)
+	{
+		std::string err = read_code(412, clients[i].getNickname(), "", "No text to send");
+		send(clients[i].getFd(), err.c_str(), err.length(), 0);
+		return;
+	}
+	
+	std::string	target = msg.params[0];
+	std::string	text = msg.params[msg.params.size() - 1];
 
-    if (!msg.empty() && msg[0] == ' ')
-        msg.erase(0, 1);
-    if (!msg.empty() && msg[0] == ':')
-        msg.erase(0, 1);
+	if (text.empty())
+	{
+		std::string err = read_code(412, clients[i].getNickname(), "", "No text to send");
+		send(clients[i].getFd(), err.c_str(), err.length(), 0);
+		return;
+	}
 
-    if (clients[i].getHasRegister())
-    {
-        if (cmd == "PRIVMSG")
+	if (clients[i].getHasRegister())
+	{
+		std::string prefix = clients[i].getNickname() + "!" 
+                       + clients[i].getName() + "@localhost";
+		std::string	final_msg = ":" + prefix + " PRIVMSG " + target + " :" + text + "\r\n";
+		
+		size_t	target_index = find_client_by_nick(target);
+
+		if (target_index != clients.size())
+			send(clients[target_index].getFd(), final_msg.c_str(), final_msg.size(), 0);
+		
+		else if (getChannel(target) != NULL)
         {
-            std::string prefix = clients[i].getNickname() + "!";
-                              
-            size_t target_index = find_client_by_nick(target);
-            
-            if (target_index != clients.size())
+            Channel *chan = getChannel(target);
+            std::vector<Client*> members = chan->getMembers();
+            for (size_t j = 0; j < members.size(); j++)
             {
-                final_msg = ":" + prefix + " PRIVMSG " + target + " :" + msg + "\r\n";
-                send(clients[target_index].getFd(), final_msg.c_str(), final_msg.size(), 0);
+                if (members[j]->getFd() != clients[i].getFd())
+                    send(members[j]->getFd(), final_msg.c_str(), final_msg.size(), 0);
             }
-
-            else if (getChannel(target) != NULL)
-            {
-                Channel *chan = getChannel(target);
-                std::vector<Client*> members = chan->getMembers();
-                final_msg = ":" + prefix + " PRIVMSG " + target + " :" + msg + "\r\n";
-                for (size_t j = 0; j < members.size(); j++)
-                {
-                    if (members[j]->getFd() != clients[i].getFd())
-                        send(members[j]->getFd(), final_msg.c_str(), final_msg.size(), 0);
-                }
-            }
-
-            else
-            {
-                std::string err = read_code(401, clients[i].getNickname(), target, "No such nick/channel");
-                send(clients[i].getFd(), err.c_str(), err.length(), 0);
-            }
+        }
+        else
+        {
+            std::string err = read_code(401, clients[i].getNickname(), target, "No such nick/channel");
+            send(clients[i].getFd(), err.c_str(), err.length(), 0);
         }
     }
 }

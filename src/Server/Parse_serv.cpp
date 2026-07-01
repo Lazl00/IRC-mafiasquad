@@ -66,14 +66,14 @@ t_message	Server::parse_message(const std::string &line) {
 	t_message	msg;
 	size_t		pos = line.find(" :");
 	std::string	first_part;
-	std::string	second_part;
-	bool		has_second = false;
+	std::string	trailing;
+	bool		has_trailing = false;
 
 	if (pos != std::string::npos) {
 
 		first_part = line.substr(0, pos);
-		second_part = line.substr(pos + 2);
-		has_second = true;
+		trailing = line.substr(pos + 2);
+		has_trailing = true;
 	}
 	else {
 
@@ -88,8 +88,8 @@ t_message	Server::parse_message(const std::string &line) {
 		msg.params.push_back(word);
 	}
 
-	if (has_second) {
-		msg.params.push_back(second_part);
+	if (has_trailing) {
+		msg.params.push_back(trailing);
 	}
 
 	return msg;
