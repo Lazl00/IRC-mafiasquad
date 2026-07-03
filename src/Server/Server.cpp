@@ -6,7 +6,7 @@
 /*   By: ainthana <ainthana@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/28 12:00:01 by wailas            #+#    #+#             */
-/*   Updated: 2026/07/01 23:38:56 by ainthana         ###   ########.fr       */
+/*   Updated: 2026/07/03 16:45:10 by ainthana         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,6 +25,7 @@ Server::~Server()
 void    Server::init_server(int port)
 {
     int opt;
+	clients.reserve(1024);
     this->next_id = 1;
 
     opt = 1;
@@ -109,17 +110,16 @@ void    Server::init_poll(char *av)
                     exit(0);
                 }
                 
-                else if (result == 0) {
-                    std::cout << clients[i - 1].getColor() << "Client [" << clients[i - 1].getId() << "] disconnected\033[0m" << std::endl;
-                    close(fds[i].fd);
-                    fds.erase(fds.begin() + i);
-                    clients.erase(clients.begin() + i - 1);
-                    i--;
-                }
+				else if (result == 0) {
+					std::cout << clients[i - 1].getColor() << "Client [" << clients[i - 1].getId() << "] disconnected\033[0m" << std::endl;
+					cleanup(i - 1, "");
+					i--;
+				}
                 
-                else {
-                    parse_token(buffer,result, i - 1, av);
-                }
+				else {
+					if (parse_token(buffer, result, i - 1, av))
+						i--;
+				}
             }
         }
     }
@@ -351,4 +351,46 @@ size_t  Server::find_client_by_nick(std::string nickname) {
         if (clients[i].getNickname() == nickname)
             return (i);
     return (clients.size());
+}
+
+void	Server::cleanup(size_t index, std::string msg) {
+	
+	std::string prefix = clients[index].getNickname() + "!" 
+                       + clients[index].getName() + "@localhost";
+	if (msg.empty())
+		msg = "Leaving";
+
+	std::string final_msg = ":" + prefix + " QUIT :" + msg + "\r\n";
+
+	std::map<std::string, Channel*>::iterator it;
+	for (it = channel.begin(); it != channel.end();)
+	{
+		std::vector<Client*> members = it->second->getMembers();
+		bool found = false;
+		
+		for (size_t j = 0; j < members.size(); j++)
+		{
+			if (members[j] == &clients[index])
+			{
+				Broadcast(it->second, final_msg);
+				it->second->kick(&clients[index]);
+				found = true;
+				break;
+			}
+		}
+		
+		if (found && it->second->getMembers().empty())
+		{
+			delete it->second;
+			channel.erase(it++);
+		}
+		else
+		{
+			++it;
+		}
+	}
+
+	close(fds[index + 1].fd);
+	fds.erase(fds.begin() + index + 1);
+	clients.erase(clients.begin() + index);
 }

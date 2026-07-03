@@ -1,6 +1,6 @@
 #include "../../includes/irc.hpp"
 
-void Server::parse_token(char *buffer, int result, int index, char *av)
+bool Server::parse_token(char *buffer, int result, int index, char *av)
 {
 	clients[index].setBuffer(clients[index].getBuffer() + std::string(buffer, result));
 
@@ -41,6 +41,16 @@ void Server::parse_token(char *buffer, int result, int index, char *av)
                 private_message(index, cmd.c_str());
             else if (msg.command == "JOIN")
                 Create_channel(cmd.c_str(), clients[index]);
+			else if (msg.command == "QUIT")
+			{
+				std::string quit_msg = "";
+				if (!msg.params.empty())
+					quit_msg = msg.params[0];
+				std::cout << clients[index].getColor() << "Client [" 
+              		<< clients[index].getId() << "] disconnected\033[0m" << std::endl;
+				cleanup(index, quit_msg);
+				return true;
+			}
             else if (msg.command == "KICK")
             {
                 // funct KICK;
@@ -59,6 +69,7 @@ void Server::parse_token(char *buffer, int result, int index, char *av)
             }
         }
     }
+	return false;
 }
 
 t_message	Server::parse_message(const std::string &line) {

@@ -82,7 +82,7 @@ class Server
         std::vector<struct pollfd>  getFds() const;
         void                        check_register(int fd, size_t i);
         Channel*                    getChannel(const std::string &name);
-		void		                parse_token(char *buffer, int result, int index, char *av);
+		bool	                	parse_token(char *buffer, int result, int index, char *av);
         t_message                   parse_message(const std::string &line);
         bool                        is_valid_nick(std::string nick);
         std::string	                read_code(int code, std::string target, std::string params, std::string msg);
@@ -90,4 +90,5 @@ class Server
         size_t						find_client_by_nick(std::string nickname);
 		bool						parse_channel(const std::string &name);
         void	                    search_channel(std::string &old_nick, std::string &new_nick);
+		void						cleanup(size_t index, std::string msg);
 };
