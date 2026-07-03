@@ -50,6 +50,7 @@ class Bot
         Bot(const std::string& password, const std::string& nickname);
         ~Bot();
 
+        int     getSock() const;
         bool    connect_to_server(const std::string& host, int port);
         void    command_bot();
 };

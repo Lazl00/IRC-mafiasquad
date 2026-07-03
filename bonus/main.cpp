@@ -2,10 +2,14 @@
 
 int main(int argc, char **argv)
 {
+    if (argc != 3) {
+        std::cerr << "./bot port password" << std::endl;
+        return (1);
+    }
     Bot bot(argv[2], "bot");
 
     if (!bot.connect_to_server("127.0.0.1", std::atoi(argv[1])))
-        return 1;
+        return (1);
 
     bot.command_bot();
 
@@ -18,5 +22,6 @@ int main(int argc, char **argv)
         buf[n] = '\0';
         std::cout << buf;
     }
+
     return (0);
 }
