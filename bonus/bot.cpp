@@ -1,4 +1,6 @@
 #include "../includes/irc.hpp"
+#include <string>
+#include <ctime>
 
 Bot::Bot(const std::string& password, const std::string& nickname) : _password(password), _nickname(nickname) {};
 
@@ -50,4 +52,46 @@ void	Bot::command_bot()
 
 	std::string msg_user = "USER " + _nickname + " 0 * : " + _nickname + "\r\n";
 	send(_sock, msg_user.c_str(), msg_user.size(), 0);
+}
+
+void	Bot::parsing_bot(std::string &buffer)
+{
+	std::string	nickname;
+	std::string cmd;
+	std::string	msg_to_nick;
+	size_t 		pos = buffer.find("!");
+	size_t		pos_command = buffer.find(" :");
+
+	nickname = buffer.substr(1, pos - 1);
+	cmd = buffer.substr(pos_command + 2);
+	if (cmd == "!help\r\n")
+	{
+		msg_to_nick = "PRIVMSG " + nickname + " :Available commands:\n!time  - Get current time\n!date  - Get current date\n!ping  - Pong !\n!roll  - Roll a random dice (1-6)\n!echo  - Repeat your message\n!help  - Show this help\r\n";
+		send(_sock, msg_to_nick.c_str(), msg_to_nick.size(), 0);
+	}
+	else if (cmd == "!ping\r\n")
+	{
+		msg_to_nick = "PRIVMSG " + nickname + " pong\r\n";
+		send(_sock, msg_to_nick.c_str(), msg_to_nick.size(), 0);
+	}
+	else if (cmd == "!time\r\n")
+	{
+		time_t timestamp;
+		time(&timestamp);
+		msg_to_nick = "PRIVMSG " + nickname + " :" + ctime(&timestamp) + "\r\n";
+		send(_sock, msg_to_nick.c_str(), msg_to_nick.size(), 0);
+	}
+	else if (cmd == "!date\r\n")
+	{
+		time_t now = time(NULL);
+		struct tm *datetime = localtime(&now);
+
+		char date[64];
+		strftime(date, sizeof(date), "%d/%m/%Y", datetime);
+
+		std::string msg =
+			"PRIVMSG " + nickname + " :Today is " +
+			std::string(date) + "\r\n";
+		send(_sock, msg.c_str(), msg.size(), 0);
+	}
 }

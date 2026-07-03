@@ -53,6 +53,7 @@ class Bot
         int     getSock() const;
         bool    connect_to_server(const std::string& host, int port);
         void    command_bot();
+        void	parsing_bot(std::string &buffer);
 };
 
 class Server

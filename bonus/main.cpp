@@ -1,4 +1,6 @@
 #include "../includes/irc.hpp"
+#include "../includes/Server.hpp"
+#include <sstream>
 
 int main(int argc, char **argv)
 {
@@ -20,8 +22,10 @@ int main(int argc, char **argv)
         if (n <= 0)
             break;
         buf[n] = '\0';
-        std::cout << buf;
-    }
+        std::string buffer(buf);
 
+        std::cout << buf;
+        bot.parsing_bot(buffer);
+    }
     return (0);
 }

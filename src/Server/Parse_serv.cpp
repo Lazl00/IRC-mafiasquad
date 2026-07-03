@@ -155,7 +155,6 @@ void	Server::search_channel(std::string &old_nick, std::string &new_nick)
 	std::ostringstream	oss;
 	std::string			final_message;
 
-	std::cout << "forceX2" << std::endl;
 	oss << ":" << old_nick << " NICK :" << new_nick << "\r\n";
 	final_message = oss.str();
 	std::set<Client*>::iterator it_set = ToNotify.begin();
