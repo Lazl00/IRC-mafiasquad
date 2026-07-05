@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ainthana <ainthana@student.42.fr>          +#+  +:+       +#+        */
+/*   By: lcournoy <lcournoy@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/28 12:00:01 by wailas            #+#    #+#             */
-/*   Updated: 2026/07/03 16:45:10 by ainthana         ###   ########.fr       */
+/*   Updated: 2026/07/06 01:36:59 by lcournoy         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -393,4 +393,127 @@ void	Server::cleanup(size_t index, std::string msg) {
 	close(fds[index + 1].fd);
 	fds.erase(fds.begin() + index + 1);
 	clients.erase(clients.begin() + index);
+}
+
+bool Server::channelExists(const std::string &name) const
+{
+    return channel.find(name) != channel.end();
+}
+
+bool Server::handleOpCmds(Client *sender, const t_message &msg)
+{
+    if (msg.params.empty())
+        return false;
+
+    const std::string &chanName = msg.params[0];
+
+    if (!parse_channel(chanName))
+        return false;
+
+    Channel *chan = getChannel(chanName);
+    if (!chan)
+        return false;
+    
+    if (!chan->isMember(sender))
+    {
+        std::cout << "Mais qui est ce mec" << std::endl;
+        return false;
+    }
+
+    if (msg.command == "KICK")
+        return handleKick(sender, chan, msg);
+    else if (msg.command == "INVITE")
+        return handleInvite(sender, chan, msg);
+    else if (msg.command == "TOPIC")
+        return handleTopic(sender, chan, msg);
+    // else if (msg.command == "MODE")
+    //     return handleMode(sender, chan, msg);
+
+    return false;
+}
+
+Client* Server::getClientByNick(const std::string &nick)
+{
+    for (size_t i = 0; i < clients.size(); i++)
+    {
+        if (clients[i].getNickname() == nick)
+            return &clients[i];
+    }
+    return NULL;
+}
+
+bool Server::handleTopic(Client *sender, Channel *chan, const t_message &msg)
+{
+    if (msg.params.size() == 1)
+    {
+        chan->seeTopic();
+        return true;
+    }
+    
+    else if(chan->isOperator(sender) || !chan->isTopicProtected())
+    {
+        chan->setTopic(msg.params[1]);
+
+        std::cout << "Nouveau topic : " << msg.params[1] << std::endl;
+        return true;
+    }
+    
+    std::cout << "You don't have the permissions to do that." << std::endl;
+    return false;
+}
+
+bool Server::handleKick(Client *sender, Channel *chan, const t_message &msg)
+{
+    
+    if (msg.params.size() != 2)
+    {
+        std::cout << "Wrong parameters." << std::endl;
+        return false;
+    }
+    
+    Client *target = getClientByNick(msg.params[1]);
+
+    // if (target == sender)
+    // {
+    //     std::cout << "You can't kick yourself." << std::endl;
+    //     return false;
+    // }
+    
+    if (!chan->isOperator(sender))
+    {
+        std::cout << "You don't have the permissions to do that." << std::endl;
+        return false;
+    }
+
+    if (target == NULL)
+    {
+        std::cout << "Targeted client is not in the channel." << std::endl;
+        return false;
+    }
+
+    chan->kick(target);
+    std::cout << "Targeted client has been kicked." << std::endl;
+    return true;
+}
+
+bool Server::handleInvite(Client *sender, Channel *chan, const t_message &msg)
+{
+    if (msg.params.size() != 2)
+    {
+        std::cout << "Wrong parameters." << std::endl;
+        return false;
+    }
+
+    Client *target = getClientByNick(msg.params[1]);
+    
+    if (target == sender)
+    {
+        std::cout << "You can't invite yourself." << std::endl;
+        return false;
+    }
+
+    std::cout << sender->getName() << " invited " << target->getName() << "to " << chan->getChannelName() << std::endl;
+    chan->invite(target);
+
+    return true;
 }

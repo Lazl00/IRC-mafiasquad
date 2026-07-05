@@ -2,6 +2,7 @@
 #include "Client.hpp"
 #include <vector>
 #include <set>
+#include <limits.h>
 
 struct t_message {
 
@@ -12,23 +13,31 @@ struct t_message {
 class Channel
 {
     private:
-        std::string              _name;
-        std::string              _topic;
-        std::vector<Client*>     _members;
-        std::vector<Client*>     _invited;
-        std::vector<Client*>     _operators;
-        bool _i;
-        bool _t;
-        bool _k;
-        bool _o;
-        bool _l;
+        std::string              _name; // channels name
+        std::string              _topic; // channels topic
+        std::string              _key; // channels key
+        unsigned long            _limit; // channels limit
+        std::vector<Client*>     _members; // channels members
+        std::vector<Client*>     _invited; // channels invited clients
+        std::vector<Client*>     _operators; // channels operators
+        bool _i; // Invite-only (on-off)
+        bool _t; // open TOPIC command (on-off)
+        bool _k; // Key (on-off)
+        bool _l; // User limit (on-off)
 
     public:
         Channel();
         ~Channel();
         Channel(std::string &name);
-        const std::string& getName() const;
+        const std::string& getChannelName() const;
         const std::vector<Client*>& getMembers() const;
+        bool isLimited() const;
+        bool hasKey() const;
+        bool isInviteOnly() const;
+        bool isTopicProtected() const;
+        unsigned long getLimit() const;
+        void setLimit(unsigned long limit);
+        const std::string &getKey() const;
         void addMember(Client *client);
         void addOperator(Client *client);
         void invite(Client *client);
@@ -37,6 +46,9 @@ class Channel
         void seeTopic();
         void mode(char cmd, std::string arg);
         void kick(Client *client);
+        bool isInvited(Client *client) const;
+        bool isMember(Client *client) const;
+        bool isOperator(Client *client) const;
 };
 
 class Bot
@@ -91,4 +103,12 @@ class Server
 		bool						parse_channel(const std::string &name);
         void	                    search_channel(std::string &old_nick, std::string &new_nick);
 		void						cleanup(size_t index, std::string msg);
+        bool                        handleOpCmds(Client *sender, const t_message &msg);
+        bool                        channelExists(const std::string &name) const;
+        bool                        handleTopic(Client *sender, Channel* chan, const t_message &msg);
+        bool                        handleKick(Client *sender, Channel* chan, const t_message &msg);
+        bool                        handleInvite(Client *sender, Channel* chan, const t_message &msg);
+        //bool                        handleMode(Client *sender, Channel* chan, const t_message &msg);
+        Client*                     getClientByNick(const std::string &nick);
+
 };

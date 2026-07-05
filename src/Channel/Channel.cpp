@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Channel.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ainthana <ainthana@student.42.fr>          +#+  +:+       +#+        */
+/*   By: lcournoy <lcournoy@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/08 12:35:32 by wailas            #+#    #+#             */
-/*   Updated: 2026/07/01 18:31:17 by ainthana         ###   ########.fr       */
+/*   Updated: 2026/07/06 01:05:43 by lcournoy         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,22 +14,20 @@
 
 Channel::Channel()
 {
+    _limit = ULONG_MAX;
     _i = false;
     _t = false;
     _k = false;
-    _o = false;
     _l = false;   
 }
 
-Channel::Channel(std::string &name)
+Channel::Channel(std::string &name) : _name(name)
 {
-    _name = name;
+    _limit = ULONG_MAX;
     _i = false;
     _t = false;
     _k = false;
-    _o = false;
     _l = false;
-    
 }
 
 Channel::~Channel() {};
@@ -92,12 +90,10 @@ void Server::Create_channel(const char *buffer, Client &client)
     }
 
     std::string channelName = msg.params[0];
-	std::string key = "";
+    std::string key = "";
 
-	//Laslo tu mettra le mode +k dans cette fonction
-
-	if (msg.params.size() >= 2)
-		key = msg.params[1];
+    if (msg.params.size() >= 2)
+        key = msg.params[1];
 
     if (!parse_channel(channelName))
     {
@@ -107,24 +103,54 @@ void Server::Create_channel(const char *buffer, Client &client)
     }
 
     Channel *chan = getChannel(channelName);
+
     if (!chan)
     {
-        std::cout << "Channel created: " << channelName << std::endl;
         chan = new Channel(channelName);
         channel[channelName] = chan;
+
+        chan->addMember(&client);
         chan->addOperator(&client);
+
+        std::string join = ":" + client.getNickname() + " JOIN " + channelName + "\r\n";
+        Broadcast(chan, join);
+        return;
     }
 
-    std::vector<Client*> members = chan->getMembers();
+    const std::vector<Client*>& members = chan->getMembers();
     for (size_t i = 0; i < members.size(); i++)
     {
         if (members[i] == &client)
             return;
     }
+
+    if (chan->isInviteOnly() && !chan->isInvited(&client))
+    {
+        std::string err = read_code(473, client.getNickname(), channelName, "Cannot join channel (+i)");
+        send(client.getFd(), err.c_str(), err.length(), 0);
+        return;
+    }
+
+    // +k
+    if (chan->hasKey() && key != chan->getKey())
+    {
+        std::string err = read_code(475, client.getNickname(), channelName, "Cannot join channel (+k)");
+        send(client.getFd(), err.c_str(), err.length(), 0);
+        return;
+    }
+
+    // +l
+    if (chan->isLimited() && members.size() >= chan->getLimit())
+    {
+        std::string err = read_code(471, client.getNickname(), channelName, "Cannot join channel (+l)");
+        send(client.getFd(), err.c_str(), err.length(), 0);
+        return;
+    }
+
     chan->addMember(&client);
 
-    std::string msg_final = ":" + client.getNickname() + " JOIN " + channelName + "\r\n";
-    Broadcast(chan, msg_final);
+    std::string join = ":" + client.getNickname() + " JOIN " + channelName + "\r\n";
+    Broadcast(chan, join);
 }
 
 const std::vector<Client*>& Channel::getMembers() const
@@ -151,3 +177,75 @@ void Channel::addOperator(Client* client)
     }
     _operators.push_back(client);
 }
+
+bool Channel::isInviteOnly() const
+{
+    return _i;
+}
+
+bool Channel::isTopicProtected() const
+{
+    return _t;
+}
+
+bool Channel::hasKey() const
+{
+    return _k;
+}
+
+bool Channel::isLimited() const
+{
+    return _l;
+}
+
+const std::string &Channel::getKey() const
+{
+    return _key;
+}
+
+unsigned long Channel::getLimit() const
+{
+    return _limit;
+}
+
+const std::string& Channel::getChannelName() const
+{
+    return _name;
+}
+
+bool Channel::isInvited(Client *client) const
+{
+    for (size_t i = 0; i < _invited.size(); i++)
+    {
+        if (_invited[i] == client)
+            return true;
+    }
+    return false;
+}
+
+bool Channel::isMember(Client *client) const
+{
+    for (size_t i = 0; i < _members.size(); i++)
+    {
+        if (_members[i] == client)
+            return true;
+    }
+    return false;
+}
+
+bool Channel::isOperator(Client *client) const
+{
+    for (size_t i = 0; i < _operators.size(); i++)
+    {
+        if (_operators[i] == client)
+            return true;
+    }
+    return false;
+}
+
+void Channel::setLimit(unsigned long limit)
+{
+    _l = true;
+    _limit = limit;
+}
+

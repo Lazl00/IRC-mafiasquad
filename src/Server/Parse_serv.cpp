@@ -53,19 +53,19 @@ bool Server::parse_token(char *buffer, int result, int index, char *av)
 			}
             else if (msg.command == "KICK")
             {
-                // funct KICK;
+                handleOpCmds(&clients[index], msg);
             }
             else if (msg.command == "INVITE")
             {
-                // funct INVITE
+                handleOpCmds(&clients[index], msg);
             }
             else if (msg.command == "TOPIC")
             {
-                // funct TOPIC;
+                handleOpCmds(&clients[index], msg);
             }
             else if (msg.command == "MODE")
             {
-                // funct MODE;
+                handleOpCmds(&clients[index], msg);
             }
         }
     }
