@@ -6,7 +6,7 @@
 /*   By: lcournoy <lcournoy@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/08 12:35:32 by wailas            #+#    #+#             */
-/*   Updated: 2026/07/06 01:05:43 by lcournoy         ###   ########.fr       */
+/*   Updated: 2026/07/06 20:40:08 by lcournoy         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,6 +59,18 @@ void    Channel::kick(Client *client)
         if (*it == client)
         {
             _members.erase(it);
+            return;
+        }
+    }
+}
+
+void    Channel::removeOperator(Client *client)
+{
+    for (std::vector<Client*>::iterator it = _operators.begin(); it != _operators.end(); ++it)
+    {
+        if (*it == client)
+        {
+            _operators.erase(it);
             return;
         }
     }
@@ -249,3 +261,27 @@ void Channel::setLimit(unsigned long limit)
     _limit = limit;
 }
 
+void Channel::set_i(bool type)
+{
+    _i = type;
+}
+
+void Channel::set_t(bool type)
+{
+    _t = type;
+}
+
+void Channel::set_k(bool type)
+{
+    _k = type;
+}
+
+void Channel::set_l(bool type)
+{
+    _l = type;
+}
+
+void Channel::setKey(std::string key)
+{
+    _key = key;
+}

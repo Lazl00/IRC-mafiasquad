@@ -40,6 +40,7 @@ class Channel
         const std::string &getKey() const;
         void addMember(Client *client);
         void addOperator(Client *client);
+        void removeOperator(Client *client);
         void invite(Client *client);
         void setName(std::string name);
         void setTopic(std::string topic);
@@ -49,6 +50,11 @@ class Channel
         bool isInvited(Client *client) const;
         bool isMember(Client *client) const;
         bool isOperator(Client *client) const;
+        void set_i(bool type);
+        void set_t(bool type);
+        void set_k(bool type);
+        void set_l(bool type);
+        void setKey(std::string key);
 };
 
 class Bot
@@ -108,7 +114,7 @@ class Server
         bool                        handleTopic(Client *sender, Channel* chan, const t_message &msg);
         bool                        handleKick(Client *sender, Channel* chan, const t_message &msg);
         bool                        handleInvite(Client *sender, Channel* chan, const t_message &msg);
-        //bool                        handleMode(Client *sender, Channel* chan, const t_message &msg);
+        bool                        handleMode(Client *sender, Channel* chan, const t_message &msg);
         Client*                     getClientByNick(const std::string &nick);
 
 };

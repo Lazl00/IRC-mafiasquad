@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ainthana <ainthana@student.42.fr>          +#+  +:+       +#+        */
+/*   By: lcournoy <lcournoy@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/28 12:00:01 by wailas            #+#    #+#             */
-/*   Updated: 2026/07/06 17:40:28 by ainthana         ###   ########.fr       */
+/*   Updated: 2026/07/06 21:05:17 by lcournoy         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -426,14 +426,28 @@ bool Server::handleOpCmds(Client *sender, const t_message &msg)
         return false;
     }
 
+    if (!chan->isMember(sender))
+    {
+        std::string err = read_code(442, sender->getNickname(), chanName, "You're not on that channel");
+        send(sender->getFd(), err.c_str(), err.length(), 0);
+        return false;
+    }
+
+    if (!chan->isOperator(sender) && msg.command != "TOPIC")
+    {
+        std::string err = read_code(482, sender->getNickname(), chan->getChannelName(), "You're not a channel operator");
+        send(sender->getFd(), err.c_str(), err.length(), 0);
+        return false;
+    }
+
     if (msg.command == "KICK")
         return handleKick(sender, chan, msg);
     else if (msg.command == "INVITE")
         return handleInvite(sender, chan, msg);
     else if (msg.command == "TOPIC")
         return handleTopic(sender, chan, msg);
-    // else if (msg.command == "MODE")
-    //     return handleMode(sender, chan, msg);
+    else if (msg.command == "MODE")
+        return handleMode(sender, chan, msg);
 
     return false;
 }
@@ -452,19 +466,19 @@ bool Server::handleTopic(Client *sender, Channel *chan, const t_message &msg)
 {
     if (msg.params.size() == 1)
     {
-        chan->seeTopic();
+        chan->seeTopic(); // FAUT AFFICHER LE TOPIX AU SENDER
         return true;
     }
     
-    else if(chan->isOperator(sender) || !chan->isTopicProtected())
+    else if(chan->isOperator(sender) || chan->isTopicProtected())
     {
-        chan->setTopic(msg.params[1]);
+        chan->setTopic(concatParams(msg, 1));
 
-        std::cout << "Nouveau topic : " << msg.params[1] << std::endl;
+        std::cout << "Nouveau topic : " << concatParams(msg, 1) << std::endl; // JSP FAUT LAFFICHER A QUI
         return true;
     }
     
-    std::string err = read_code(482, sender->getNickname(), chan->getChannelName(), "You're not channel operator");
+    std::string err = read_code(482, sender->getNickname(), chan->getChannelName(), "You're not a channel operator");
     send(sender->getFd(), err.c_str(), err.length(), 0);
     return false;
 }
@@ -486,13 +500,6 @@ bool Server::handleKick(Client *sender, Channel *chan, const t_message &msg)
     //     std::cout << "You can't kick yourself." << std::endl;
     //     return false;
     // }
-    
-    if (!chan->isOperator(sender))
-    {
-        std::string err = read_code(482, sender->getNickname(), chan->getChannelName(), "You're not channel operator");
-        send(sender->getFd(), err.c_str(), err.length(), 0);
-        return false;
-    }
 
     if (target == NULL)
     {
@@ -527,13 +534,6 @@ bool Server::handleInvite(Client *sender, Channel *chan, const t_message &msg)
         return false;
     }
 
-    if (!chan->isOperator(sender))
-    {
-        std::string err = read_code(482, sender->getNickname(), chan->getChannelName(), "You're not channel operator");
-        send(sender->getFd(), err.c_str(), err.length(), 0);
-        return false;
-    }
-
     Client *target = getClientByNick(msg.params[1]);
 
     if (target == NULL)
@@ -544,8 +544,11 @@ bool Server::handleInvite(Client *sender, Channel *chan, const t_message &msg)
     }
 
     if (target == sender)
+    {
+        std::string err = read_code(443, sender->getNickname(), msg.params[1], "is already on channel");
+        send(sender->getFd(), err.c_str(), err.length(), 0);
         return false;
-
+    }
     if (chan->isMember(target))
     {
         std::string err = read_code(443, sender->getNickname(), msg.params[1], "is already on channel");
@@ -564,4 +567,175 @@ bool Server::handleInvite(Client *sender, Channel *chan, const t_message &msg)
     send(target->getFd(), notif.c_str(), notif.length(), 0);
 
     return true;
+}
+
+bool Server::handleMode(Client *sender, Channel *chan, const t_message &msg)
+{
+    if (msg.params.size() < 2)
+    {
+        std::string err = read_code(461, sender->getNickname(), "MODE", "Not enough parameters.");
+        send(sender->getFd(), err.c_str(), err.length(), 0);
+        return false;
+    }
+
+    bool type = true;
+    
+    if (msg.params[1][0] == '-')
+        type = false;
+    else if (msg.params[1][0] == '+')
+        type = true;
+    else
+    {
+        std::string err = read_code(461, sender->getNickname(), "MODE", "Wrong input parameters."); // ALEXISSS ALEDD
+        send(sender->getFd(), err.c_str(), err.length(), 0);
+        return false;
+    }
+
+    if (msg.params[1][1] == 'i')
+    {
+        if (msg.params.size() != 2)
+        {
+            std::string err = read_code(461, sender->getNickname(), "MODE", "Wrong input parameters."); // ALEXISSS ALEDD
+            send(sender->getFd(), err.c_str(), err.length(), 0);
+            return false;
+        }
+        if (type == true)
+            std::cout << "i set à true" << std::endl;
+        if (type == false)
+            std::cout << "i set à false" << std::endl;
+        chan->set_i(type);
+        return true;
+    }
+    if (msg.params[1][1] == 't')
+    {
+        if (msg.params.size() != 2)
+        {
+            std::string err = read_code(461, sender->getNickname(), "MODE", "Wrong input parameters."); // ALEXISSS ALEDD
+            send(sender->getFd(), err.c_str(), err.length(), 0);
+            return false;
+        }
+        if (type == true)
+            std::cout << "t set à true" << std::endl;
+        if (type == false)
+            std::cout << "t set à false" << std::endl;
+        chan->set_t(type);
+        return true;
+    }
+    if (msg.params[1][1] == 'k')
+    {
+        if (type == false)
+        {
+            if (msg.params.size() != 2)
+            {
+                std::string err = read_code(461, sender->getNickname(), "MODE", "Wrong input parameters."); // ALEXISSS ALEDD
+                send(sender->getFd(), err.c_str(), err.length(), 0);
+                return false;
+            }
+        }
+        if (type == true)
+        {
+            if (msg.params.size() != 3)
+            {
+                std::string err = read_code(461, sender->getNickname(), "MODE", "Wrong input parameters."); // ALEXISSS ALEDD
+                send(sender->getFd(), err.c_str(), err.length(), 0);
+                return false;
+            }
+        }
+        chan->set_k(type);
+        if (type == true)
+            chan->setKey(msg.params[2]);
+        if (type == true)
+            std::cout << "k set à true" << std::endl;
+        if (type == false)
+            std::cout << "k set à false" << std::endl;
+        return true;
+    }
+    if (msg.params[1][1] == 'o')
+    {
+        if (msg.params.size() != 3)
+        {
+            std::string err = read_code(461, sender->getNickname(), "MODE", "Wrong input parameters."); // ALEXISSS ALEDD
+            send(sender->getFd(), err.c_str(), err.length(), 0);
+            return false;
+        }
+        Client *target = getClientByNick(msg.params[2]);
+        if (target == NULL)
+        {
+            std::string err = read_code(401, sender->getNickname(), msg.command, "No such nick");
+            send(sender->getFd(), err.c_str(), err.length(), 0);
+            return false;
+        }
+        if (type == true)
+            std::cout << "o set à true" << std::endl;
+        if (type == false)
+            std::cout << "o set à false" << std::endl;
+        if (type == true)
+            chan->addOperator(target);
+        if (type == false)
+            chan->removeOperator(target);
+        return true;
+    }
+    if (msg.params[1][1] == 'l')
+    {
+        if (type == false)
+        {
+            if (msg.params.size() != 2)
+            {
+                std::string err = read_code(461, sender->getNickname(), "MODE", "Wrong input parameters."); // ALEXISSS ALEDD
+                send(sender->getFd(), err.c_str(), err.length(), 0);
+                return false;
+            }
+        }
+        if (type == true)
+        {
+            if (msg.params.size() != 3)
+            {
+                std::string err = read_code(461, sender->getNickname(), "MODE", "Wrong input parameters."); // ALEXISSS ALEDD
+                send(sender->getFd(), err.c_str(), err.length(), 0);
+                return false;
+            }
+        }
+        if (type == false)
+        {
+            chan->set_l(false);
+            chan->setLimit(ULONG_MAX);
+            if (type == false)
+                std::cout << "l set à false" << std::endl;
+            return true;
+        }
+        if (type == true)
+        {
+            if (chan->getMembers().size() > (size_t)atol(msg.params[2].c_str()))
+            {
+                std::string err = read_code(401, sender->getNickname(), msg.command, "Can only set a limit above the current number of members.");
+                send(sender->getFd(), err.c_str(), err.length(), 0);
+                return false;
+            }
+            chan->set_l(true);
+            chan->setLimit(atol(msg.params[2].c_str()));
+            std::cout << "l set à true" << std::endl;
+        }
+        return true;
+    }
+    else
+    {
+        std::string err = read_code(461, sender->getNickname(), "MODE", "Wrong input parameters."); // ALEXISSS ALEDD
+        send(sender->getFd(), err.c_str(), err.length(), 0);
+        return false;
+    }
+    
+    return false;
+}
+
+std::string concatParams(const t_message &msg, size_t start)
+{
+    std::string result;
+
+    for (size_t i = start; i < msg.params.size(); i++)
+    {
+        if (i != start)
+            result += " ";
+        result += msg.params[i];
+    }
+    return result;
 }

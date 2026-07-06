@@ -22,5 +22,7 @@
 #include <stdio.h>
 
 void    handle_sig(int sig);
+std::string concatParams(const t_message &msg, size_t start);
+
 
 #endif
