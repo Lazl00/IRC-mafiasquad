@@ -143,7 +143,6 @@ std::string	Server::read_code(int code, std::string target, std::string params, 
 void	Server::search_channel(std::string &old_nick, std::string &new_nick)
 {
 	std::set<Client*> ToNotify;
-	std::cout << "force" << std::endl;
 	std::map<std::string, Channel*>::iterator it = channel.begin();
 	for (; it != channel.end(); it++)
 	{
@@ -157,11 +156,6 @@ void	Server::search_channel(std::string &old_nick, std::string &new_nick)
 				}
 			}
 		}
-	}
-	std::set<Client*>::iterator it_list = ToNotify.begin();
-	for (; it_list != ToNotify.end(); it_list++)
-	{
-		std::cout << "ce Client est un ami a :"<< (*it_list)->getNickname() << std::endl;
 	}
 	std::ostringstream	oss;
 	std::string			final_message;

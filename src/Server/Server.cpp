@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lcournoy <lcournoy@student.42.fr>          +#+  +:+       +#+        */
+/*   By: ainthana <ainthana@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/28 12:00:01 by wailas            #+#    #+#             */
-/*   Updated: 2026/07/06 01:36:59 by lcournoy         ###   ########.fr       */
+/*   Updated: 2026/07/06 17:40:28 by ainthana         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,8 +19,16 @@ Server::~Server()
     for (size_t i = 0; i < fds.size(); i++)
         close(fds[i].fd);
     fds.clear();
+    
     clients.clear();
-};
+    
+    std::map<std::string, Channel*>::iterator it;
+    for (it = channel.begin(); it != channel.end(); ++it)
+    {
+        delete it->second;
+    }
+    channel.clear();
+}
 
 void    Server::init_server(int port)
 {
@@ -105,10 +113,7 @@ void    Server::init_poll(char *av)
                 result = recv(fds[i].fd, buffer, sizeof(buffer), 0);
                 
                 if (result < 0)
-                {
-                    perror("funtion recv got an error");
-                    exit(0);
-                }
+                    continue;
                 
 				else if (result == 0) {
 					std::cout << clients[i - 1].getColor() << "Client [" << clients[i - 1].getId() << "] disconnected\033[0m" << std::endl;
@@ -416,7 +421,8 @@ bool Server::handleOpCmds(Client *sender, const t_message &msg)
     
     if (!chan->isMember(sender))
     {
-        std::cout << "Mais qui est ce mec" << std::endl;
+        std::string err = read_code(442, sender->getNickname(), chanName, "You're not on that channel");
+        send(sender->getFd(), err.c_str(), err.length(), 0);
         return false;
     }
 
@@ -458,16 +464,18 @@ bool Server::handleTopic(Client *sender, Channel *chan, const t_message &msg)
         return true;
     }
     
-    std::cout << "You don't have the permissions to do that." << std::endl;
+    std::string err = read_code(482, sender->getNickname(), chan->getChannelName(), "You're not channel operator");
+    send(sender->getFd(), err.c_str(), err.length(), 0);
     return false;
 }
 
 bool Server::handleKick(Client *sender, Channel *chan, const t_message &msg)
 {
     
-    if (msg.params.size() != 2)
+    if (msg.params.size() < 2)
     {
-        std::cout << "Wrong parameters." << std::endl;
+        std::string err = read_code(461, sender->getNickname(), "KICK", "Not enough parameters");
+        send(sender->getFd(), err.c_str(), err.length(), 0);
         return false;
     }
     
@@ -481,39 +489,79 @@ bool Server::handleKick(Client *sender, Channel *chan, const t_message &msg)
     
     if (!chan->isOperator(sender))
     {
-        std::cout << "You don't have the permissions to do that." << std::endl;
+        std::string err = read_code(482, sender->getNickname(), chan->getChannelName(), "You're not channel operator");
+        send(sender->getFd(), err.c_str(), err.length(), 0);
         return false;
     }
 
     if (target == NULL)
     {
-        std::cout << "Targeted client is not in the channel." << std::endl;
+        std::string err = read_code(401, sender->getNickname(), msg.params[1], "No such nick/channel");
+        send(sender->getFd(), err.c_str(), err.length(), 0);
         return false;
     }
 
+    if (!chan->isMember(target))
+    {
+        std::string err = read_code(441, sender->getNickname(), msg.params[1], "They aren't on that channel");
+        send(sender->getFd(), err.c_str(), err.length(), 0);
+        return false;
+    }
+
+    //faut je revois pour le Broadcast pas sur c'est le bon format
+    std::string prefix = sender->getNickname() + "!" 
+                   + sender->getName() + "@localhost";
+    std::string kick_msg = ":" + prefix + " KICK " + target->getNickname() + " :" + "\r\n";
+    Broadcast(chan, kick_msg);
+    
     chan->kick(target);
-    std::cout << "Targeted client has been kicked." << std::endl;
     return true;
 }
 
 bool Server::handleInvite(Client *sender, Channel *chan, const t_message &msg)
 {
-    if (msg.params.size() != 2)
+    if (msg.params.size() < 2)
     {
-        std::cout << "Wrong parameters." << std::endl;
+        std::string err = read_code(461, sender->getNickname(), "INVITE", "Not enough parameters");
+        send(sender->getFd(), err.c_str(), err.length(), 0);
+        return false;
+    }
+
+    if (!chan->isOperator(sender))
+    {
+        std::string err = read_code(482, sender->getNickname(), chan->getChannelName(), "You're not channel operator");
+        send(sender->getFd(), err.c_str(), err.length(), 0);
         return false;
     }
 
     Client *target = getClientByNick(msg.params[1]);
-    
-    if (target == sender)
+
+    if (target == NULL)
     {
-        std::cout << "You can't invite yourself." << std::endl;
+        std::string err = read_code(401, sender->getNickname(), msg.params[1], "No such nick");
+        send(sender->getFd(), err.c_str(), err.length(), 0);
         return false;
     }
 
-    std::cout << sender->getName() << " invited " << target->getName() << "to " << chan->getChannelName() << std::endl;
+    if (target == sender)
+        return false;
+
+    if (chan->isMember(target))
+    {
+        std::string err = read_code(443, sender->getNickname(), msg.params[1], "is already on channel");
+        send(sender->getFd(), err.c_str(), err.length(), 0);
+        return false;
+    }
+
     chan->invite(target);
+
+    // confirmation au sender (341 RPL_INVITING)
+    std::string confirm = read_code(341, sender->getNickname(), msg.params[1], chan->getChannelName());
+    send(sender->getFd(), confirm.c_str(), confirm.length(), 0);
+
+    // notification à la cible
+    std::string notif = ":" + sender->getNickname() + " INVITE " + target->getNickname() + " " + chan->getChannelName() + "\r\n";
+    send(target->getFd(), notif.c_str(), notif.length(), 0);
 
     return true;
 }
