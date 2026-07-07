@@ -308,7 +308,7 @@ void Server::private_message(int i, const char* buffer)
 		if (target_index != clients.size())
 			send(clients[target_index].getFd(), final_msg.c_str(), final_msg.size(), 0);
 		
-		else if (getChannel(target) != NULL)
+		else if (getChannel(target) != NULL && getChannel(target)->isMember(&clients[i]))
         {
             Channel *chan = getChannel(target);
             std::vector<Client*> members = chan->getMembers();
@@ -516,8 +516,7 @@ bool Server::handleKick(Client *sender, Channel *chan, const t_message &msg)
     }
 
     //faut je revois pour le Broadcast pas sur c'est le bon format
-    std::string prefix = sender->getNickname() + "!" 
-                   + sender->getName() + "@localhost";
+    std::string prefix = sender->getNickname() + "!" + sender->getName() + "@localhost";
     std::string kick_msg = ":" + prefix + " KICK " + target->getNickname() + " :" + "\r\n";
     Broadcast(chan, kick_msg);
     
@@ -586,7 +585,7 @@ bool Server::handleMode(Client *sender, Channel *chan, const t_message &msg)
         type = true;
     else
     {
-        std::string err = read_code(461, sender->getNickname(), "MODE", "Wrong input parameters."); // ALEXISSS ALEDD
+        std::string err = read_code(461, sender->getNickname(), "MODE", "Wrong input parameters.");
         send(sender->getFd(), err.c_str(), err.length(), 0);
         return false;
     }
@@ -595,7 +594,7 @@ bool Server::handleMode(Client *sender, Channel *chan, const t_message &msg)
     {
         if (msg.params.size() != 2)
         {
-            std::string err = read_code(461, sender->getNickname(), "MODE", "Wrong input parameters."); // ALEXISSS ALEDD
+            std::string err = read_code(461, sender->getNickname(), "MODE", "Wrong input parameters.");
             send(sender->getFd(), err.c_str(), err.length(), 0);
             return false;
         }
@@ -610,7 +609,7 @@ bool Server::handleMode(Client *sender, Channel *chan, const t_message &msg)
     {
         if (msg.params.size() != 2)
         {
-            std::string err = read_code(461, sender->getNickname(), "MODE", "Wrong input parameters."); // ALEXISSS ALEDD
+            std::string err = read_code(461, sender->getNickname(), "MODE", "Wrong input parameters.");
             send(sender->getFd(), err.c_str(), err.length(), 0);
             return false;
         }
@@ -627,7 +626,7 @@ bool Server::handleMode(Client *sender, Channel *chan, const t_message &msg)
         {
             if (msg.params.size() != 2)
             {
-                std::string err = read_code(461, sender->getNickname(), "MODE", "Wrong input parameters."); // ALEXISSS ALEDD
+                std::string err = read_code(461, sender->getNickname(), "MODE", "Wrong input parameters.");
                 send(sender->getFd(), err.c_str(), err.length(), 0);
                 return false;
             }
@@ -636,7 +635,7 @@ bool Server::handleMode(Client *sender, Channel *chan, const t_message &msg)
         {
             if (msg.params.size() != 3)
             {
-                std::string err = read_code(461, sender->getNickname(), "MODE", "Wrong input parameters."); // ALEXISSS ALEDD
+                std::string err = read_code(461, sender->getNickname(), "MODE", "Wrong input parameters.");
                 send(sender->getFd(), err.c_str(), err.length(), 0);
                 return false;
             }
@@ -654,7 +653,7 @@ bool Server::handleMode(Client *sender, Channel *chan, const t_message &msg)
     {
         if (msg.params.size() != 3)
         {
-            std::string err = read_code(461, sender->getNickname(), "MODE", "Wrong input parameters."); // ALEXISSS ALEDD
+            std::string err = read_code(461, sender->getNickname(), "MODE", "Wrong input parameters.");
             send(sender->getFd(), err.c_str(), err.length(), 0);
             return false;
         }
@@ -681,7 +680,7 @@ bool Server::handleMode(Client *sender, Channel *chan, const t_message &msg)
         {
             if (msg.params.size() != 2)
             {
-                std::string err = read_code(461, sender->getNickname(), "MODE", "Wrong input parameters."); // ALEXISSS ALEDD
+                std::string err = read_code(461, sender->getNickname(), "MODE", "Wrong input parameters.");
                 send(sender->getFd(), err.c_str(), err.length(), 0);
                 return false;
             }
@@ -690,7 +689,7 @@ bool Server::handleMode(Client *sender, Channel *chan, const t_message &msg)
         {
             if (msg.params.size() != 3)
             {
-                std::string err = read_code(461, sender->getNickname(), "MODE", "Wrong input parameters."); // ALEXISSS ALEDD
+                std::string err = read_code(461, sender->getNickname(), "MODE", "Wrong input parameters.");
                 send(sender->getFd(), err.c_str(), err.length(), 0);
                 return false;
             }
@@ -719,7 +718,7 @@ bool Server::handleMode(Client *sender, Channel *chan, const t_message &msg)
     }
     else
     {
-        std::string err = read_code(461, sender->getNickname(), "MODE", "Wrong input parameters."); // ALEXISSS ALEDD
+        std::string err = read_code(461, sender->getNickname(), "MODE", "Wrong input parameters.");
         send(sender->getFd(), err.c_str(), err.length(), 0);
         return false;
     }

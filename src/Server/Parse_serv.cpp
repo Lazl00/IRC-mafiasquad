@@ -152,7 +152,8 @@ void	Server::search_channel(std::string &old_nick, std::string &new_nick)
 			{
 				for (size_t j = 0; j < it->second->getMembers().size(); j++)
 				{
-					ToNotify.insert(it->second->getMembers()[j]);
+                    if (it->second->getMembers()[j]->getNickname() != old_nick)
+					    ToNotify.insert(it->second->getMembers()[j]);
 				}
 			}
 		}
@@ -160,7 +161,13 @@ void	Server::search_channel(std::string &old_nick, std::string &new_nick)
 	std::ostringstream	oss;
 	std::string			final_message;
 
-	oss << ":" << old_nick << " NICK :" << new_nick << "\r\n";
+
+    oss << ":"
+        << old_nick << "!"
+        << old_nick << "@localhost "
+        << "NICK :"
+        << new_nick
+        << "\r\n";
 	final_message = oss.str();
 	std::set<Client*>::iterator it_set = ToNotify.begin();
 	for (; it_set != ToNotify.end(); it_set++)
@@ -196,9 +203,6 @@ void Server::change_nick(const char *buffer, int fd, size_t i)
     std::string old_nick = clients[i].getNickname();
 	search_channel(old_nick, msg.params[0]);
     clients[i].setNickname(msg.params[0]);
-
-    std::string notif = ":" + old_nick + " NICK :" + msg.params[0] + "\r\n";
-    send(fd, notif.c_str(), notif.size(), 0);
 
     std::cout << clients[i].getColor() << "Client [" << clients[i].getId()
               << "] changed nick from " << old_nick << " to " << msg.params[0]
