@@ -31,6 +31,7 @@ class Channel
         Channel(std::string &name);
         const std::string& getChannelName() const;
         const std::vector<Client*>& getMembers() const;
+        const std::string&			getTopic() const;
         bool isLimited() const;
         bool hasKey() const;
         bool isInviteOnly() const;

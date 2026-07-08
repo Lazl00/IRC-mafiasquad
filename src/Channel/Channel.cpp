@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Channel.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lcournoy <lcournoy@student.42.fr>          +#+  +:+       +#+        */
+/*   By: ainthana <ainthana@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/08 12:35:32 by wailas            #+#    #+#             */
-/*   Updated: 2026/07/08 14:57:10 by lcournoy         ###   ########.fr       */
+/*   Updated: 2026/07/08 15:09:40 by ainthana         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -183,6 +183,11 @@ void Server::Create_channel(const char *buffer, Client &client)
 const std::vector<Client*>& Channel::getMembers() const
 {
     return _members;
+}
+
+const std::string& Channel::getTopic() const
+{
+    return _topic;
 }
 
 void    Server::Broadcast(Channel *chan, std::string msg)

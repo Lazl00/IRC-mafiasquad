@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lcournoy <lcournoy@student.42.fr>          +#+  +:+       +#+        */
+/*   By: ainthana <ainthana@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/28 12:00:01 by wailas            #+#    #+#             */
-/*   Updated: 2026/07/08 14:51:22 by lcournoy         ###   ########.fr       */
+/*   Updated: 2026/07/08 15:13:49 by ainthana         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -466,7 +466,16 @@ bool Server::handleTopic(Client *sender, Channel *chan, const t_message &msg)
 {
     if (msg.params.size() == 1)
     {
-        chan->seeTopic(); // FAUT AFFICHER LE TOPIX AU SENDER
+        if (chan->getTopic().empty())
+        {
+            std::string r = read_code(331, sender->getNickname(), chan->getChannelName(), "No topic is set");
+            send(sender->getFd(), r.c_str(), r.length(), 0);
+        }
+        else
+        {
+            std::string r = read_code(332, sender->getNickname(), chan->getChannelName(), chan->getTopic());
+            send(sender->getFd(), r.c_str(), r.length(), 0);
+        }
         return true;
     }
     
@@ -474,7 +483,10 @@ bool Server::handleTopic(Client *sender, Channel *chan, const t_message &msg)
     {
         chan->setTopic(concatParams(msg, 1));
 
-        std::cout << "Nouveau topic : " << concatParams(msg, 1) << std::endl; // JSP FAUT LAFFICHER A QUI
+        std::string prefix = sender->getNickname() + "!" + sender->getName() + "@localhost";
+        std::string topic_msg = ":" + prefix + " TOPIC " + chan->getChannelName() + " :" + concatParams(msg, 1) + "\r\n";
+        Broadcast(chan, topic_msg);
+
         return true;
     }
     
@@ -495,12 +507,6 @@ bool Server::handleKick(Client *sender, Channel *chan, const t_message &msg)
     
     Client *target = getClientByNick(msg.params[1]);
 
-    // if (target == sender)
-    // {
-    //     std::cout << "You can't kick yourself." << std::endl;
-    //     return false;
-    // }
-
     if (target == NULL)
     {
         std::string err = read_code(401, sender->getNickname(), msg.params[1], "No such nick/channel");
@@ -515,7 +521,6 @@ bool Server::handleKick(Client *sender, Channel *chan, const t_message &msg)
         return false;
     }
 
-    //faut je revois pour le Broadcast pas sur c'est le bon format
     std::string prefix = sender->getNickname() + "!" + sender->getName() + "@localhost";
     std::string kick_msg = ":" + prefix + " KICK " + target->getNickname() + " :" + "\r\n";
     Broadcast(chan, kick_msg);
@@ -597,10 +602,6 @@ bool Server::handleMode(Client *sender, Channel *chan, const t_message &msg)
             send(sender->getFd(), err.c_str(), err.length(), 0);
             return false;
         }
-        if (type == true)
-            std::cout << "i set à true" << std::endl;
-        if (type == false)
-            std::cout << "i set à false" << std::endl;
         chan->set_i(type);
         return true;
     }
@@ -612,10 +613,6 @@ bool Server::handleMode(Client *sender, Channel *chan, const t_message &msg)
             send(sender->getFd(), err.c_str(), err.length(), 0);
             return false;
         }
-        if (type == true)
-            std::cout << "t set à true" << std::endl;
-        if (type == false)
-            std::cout << "t set à false" << std::endl;
         chan->set_t(type);
         return true;
     }
@@ -642,10 +639,6 @@ bool Server::handleMode(Client *sender, Channel *chan, const t_message &msg)
         chan->set_k(type);
         if (type == true)
             chan->setKey(msg.params[2]);
-        if (type == true)
-            std::cout << "k set à true" << std::endl;
-        if (type == false)
-            std::cout << "k set à false" << std::endl;
         return true;
     }
     if (msg.params[1][1] == 'o')
@@ -663,10 +656,6 @@ bool Server::handleMode(Client *sender, Channel *chan, const t_message &msg)
             send(sender->getFd(), err.c_str(), err.length(), 0);
             return false;
         }
-        if (type == true)
-            std::cout << "o set à true" << std::endl;
-        if (type == false)
-            std::cout << "o set à false" << std::endl;
         if (type == true)
             chan->addOperator(target);
         if (type == false)
