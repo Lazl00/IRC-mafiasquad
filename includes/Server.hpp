@@ -41,6 +41,7 @@ class Channel
         void addMember(Client *client);
         void addOperator(Client *client);
         void removeOperator(Client *client);
+        void removeInvited(Client *client);
         void invite(Client *client);
         void setName(std::string name);
         void setTopic(std::string topic);

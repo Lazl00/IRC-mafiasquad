@@ -6,7 +6,7 @@
 /*   By: lcournoy <lcournoy@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/08 12:35:32 by wailas            #+#    #+#             */
-/*   Updated: 2026/07/06 20:40:08 by lcournoy         ###   ########.fr       */
+/*   Updated: 2026/07/08 14:57:10 by lcournoy         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,8 +57,22 @@ void    Channel::kick(Client *client)
     for (std::vector<Client*>::iterator it = _members.begin(); it != _members.end(); ++it)
     {
         if (*it == client)
-        {
             _members.erase(it);
+    }
+    for (std::vector<Client*>::iterator it = _operators.begin(); it != _operators.end(); ++it)
+    {
+        if (*it == client)
+            _operators.erase(it);
+    }
+}
+
+void    Channel::removeInvited(Client *client)
+{
+    for (std::vector<Client*>::iterator it = _invited.begin(); it != _invited.end(); ++it)
+    {
+        if (*it == client)
+        {
+            _invited.erase(it);
             return;
         }
     }
@@ -160,6 +174,7 @@ void Server::Create_channel(const char *buffer, Client &client)
     }
 
     chan->addMember(&client);
+    chan->removeInvited(&client);
 
     std::string join = ":" + client.getNickname() + " JOIN " + channelName + "\r\n";
     Broadcast(chan, join);
