@@ -6,7 +6,7 @@
 /*   By: ainthana <ainthana@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/28 12:00:01 by wailas            #+#    #+#             */
-/*   Updated: 2026/07/08 15:13:49 by ainthana         ###   ########.fr       */
+/*   Updated: 2026/07/08 15:47:06 by ainthana         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -522,7 +522,8 @@ bool Server::handleKick(Client *sender, Channel *chan, const t_message &msg)
     }
 
     std::string prefix = sender->getNickname() + "!" + sender->getName() + "@localhost";
-    std::string kick_msg = ":" + prefix + " KICK " + target->getNickname() + " :" + "\r\n";
+    std::string reason = (msg.params.size() >= 3) ? msg.params[2] : sender->getNickname();
+    std::string kick_msg = ":" + prefix + " KICK " + chan->getChannelName() + " " + target->getNickname() + " :" + reason + "\r\n";
     Broadcast(chan, kick_msg);
     chan->kick(target);
     return true;

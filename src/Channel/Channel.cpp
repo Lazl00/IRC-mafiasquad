@@ -6,7 +6,7 @@
 /*   By: ainthana <ainthana@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/08 12:35:32 by wailas            #+#    #+#             */
-/*   Updated: 2026/07/08 15:09:40 by ainthana         ###   ########.fr       */
+/*   Updated: 2026/07/08 15:50:07 by ainthana         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,12 +57,19 @@ void    Channel::kick(Client *client)
     for (std::vector<Client*>::iterator it = _members.begin(); it != _members.end(); ++it)
     {
         if (*it == client)
+        {
             _members.erase(it);
+            break;
+        }
     }
+
     for (std::vector<Client*>::iterator it = _operators.begin(); it != _operators.end(); ++it)
     {
         if (*it == client)
+        {
             _operators.erase(it);
+            break;
+        }
     }
 }
 
