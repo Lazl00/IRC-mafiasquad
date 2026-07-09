@@ -6,7 +6,7 @@
 /*   By: ainthana <ainthana@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/28 12:00:01 by wailas            #+#    #+#             */
-/*   Updated: 2026/07/09 14:44:46 by ainthana         ###   ########.fr       */
+/*   Updated: 2026/07/10 00:00:44 by ainthana         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,6 @@ Server::Server() {};
 
 Server::~Server()
 {
-	std::cout << "slt" << std::endl;
     for (size_t i = 0; i < fds.size(); i++)
         close(fds[i].fd);
     fds.clear();
@@ -122,12 +121,14 @@ void    Server::init_poll(char *av)
 				else if (result == 0) {
 					std::cout << clients[i - 1].getColor() << "Client [" << clients[i - 1].getId() << "] disconnected\033[0m" << std::endl;
 					cleanup(i - 1, "");
-					i--;
+					//i--;
+                    break; //pour que irssi voit broadcast QUIT : POLL recalcule l'index
 				}
                 
 				else {
 					if (parse_token(buffer, result, i - 1, av))
-						i--;
+                        //i--; //same
+						break;
 				}
             }
         }
@@ -575,7 +576,7 @@ bool Server::handleInvite(Client *sender, Channel *chan, const t_message &msg)
     return true;
 }
 
-bool Server::handleMode(Client *sender, Channel *chan, const t_message &msg)
+bool Server::handleMode(Client *sender, Channel *chan, const t_message &msg) //faut check que le channel existe ou le mode existe "MODE #inconnu +z"
 {
     if (msg.params.size() < 2)
     {
@@ -606,8 +607,15 @@ bool Server::handleMode(Client *sender, Channel *chan, const t_message &msg)
             return false;
         }
         chan->set_i(type);
+        
+        std::string prefix = sender->getNickname() + "!" + sender->getName() + "@localhost";
+        std::string mode = type ? "+i" : "-i";
+        std::string mode_msg = ":" + prefix + " MODE " + chan->getChannelName() + " " + mode + "\r\n";
+        Broadcast(chan, mode_msg);
+
         return true;
     }
+
     if (msg.params[1][1] == 't')
     {
         if (msg.params.size() != 2)
@@ -617,8 +625,15 @@ bool Server::handleMode(Client *sender, Channel *chan, const t_message &msg)
             return false;
         }
         chan->set_t(type);
+
+        std::string prefix = sender->getNickname() + "!" + sender->getName() + "@localhost";
+        std::string mode = type ? "+t" : "-t";
+        std::string mode_msg = ":" + prefix + " MODE " + chan->getChannelName() + " " + mode + "\r\n";
+        Broadcast(chan, mode_msg);
+
         return true;
     }
+    
     if (msg.params[1][1] == 'k')
     {
         if (type == false)
@@ -640,19 +655,25 @@ bool Server::handleMode(Client *sender, Channel *chan, const t_message &msg)
             }
         }
         chan->set_k(type);
+
+        std::string prefix = sender->getNickname() + "!" + sender->getName() + "@localhost";
+
         if (type == false)
         {
-            std::string removeKeyMsg = msg.params[0] + " key system has been disabled.";
-            Broadcast(getChannel(msg.params[0]), removeKeyMsg);
+            std::string mode_msg = ":" + prefix + " MODE " + chan->getChannelName() + " -k\r\n";
+            Broadcast(chan, mode_msg);
+            chan->setKey(""); 
         }
         if (type == true)
         {
-            std::string addKeyMsg = msg.params[0] + " key system has been enabled.";
-            Broadcast(getChannel(msg.params[0]), addKeyMsg);
             chan->setKey(msg.params[2]);
+            std::string mode_msg = ":" + prefix + " MODE " + chan->getChannelName() + " +k\r\n";
+            Broadcast(chan, mode_msg);
         }
+
         return true;
     }
+    
     if (msg.params[1][1] == 'o')
     {
         if (msg.params.size() != 3)
@@ -670,18 +691,20 @@ bool Server::handleMode(Client *sender, Channel *chan, const t_message &msg)
         }
         if (type == true)
         {
-            std::string promoteMsg = "You have been promoted to Operator in " + msg.params[0] + ".";
-            send(target->getFd(), promoteMsg.c_str(), promoteMsg.length(), 0);
             chan->addOperator(target);
         }
         if (type == false)
         {
-            std::string demoteMsg = "You've lost your operator privileges in " + msg.params[0] + ".";
-            send(target->getFd(), demoteMsg.c_str(), demoteMsg.length(), 0);
             chan->removeOperator(target);
         }
+
+        std::string prefix = sender->getNickname() + "!" + sender->getName() + "@localhost";
+        std::string mode = type ? "+o" : "-o";
+        std::string mode_msg = ":" + prefix + " MODE " + chan->getChannelName() + " " + mode + " " + target->getNickname() + "\r\n";
+        Broadcast(chan, mode_msg);
         return true;
     }
+    
     if (msg.params[1][1] == 'l')
     {
         if (type == false)
@@ -702,12 +725,18 @@ bool Server::handleMode(Client *sender, Channel *chan, const t_message &msg)
                 return false;
             }
         }
+
+        std::string prefix = sender->getNickname() + "!" + sender->getName() + "@localhost";
+
         if (type == false)
         {
             chan->set_l(false);
             chan->setLimit(ULONG_MAX);
-            if (type == false)
-                std::cout << "l set à false" << std::endl;
+            std::cout << "l set à false" << std::endl;
+
+            std::string mode_msg = ":" + prefix + " MODE " + chan->getChannelName() + " -l\r\n";
+            Broadcast(chan, mode_msg);
+
             return true;
         }
         if (type == true)
@@ -721,6 +750,9 @@ bool Server::handleMode(Client *sender, Channel *chan, const t_message &msg)
             chan->set_l(true);
             chan->setLimit(atol(msg.params[2].c_str()));
             std::cout << "l set à true" << std::endl;
+
+            std::string mode_msg = ":" + prefix + " MODE " + chan->getChannelName() + " +l " + msg.params[2] + "\r\n";
+            Broadcast(chan, mode_msg);
         }
         return true;
     }

@@ -108,7 +108,7 @@ class Server
         void                        change_nick(const char *buffer, int fd, size_t i);
         size_t						find_client_by_nick(std::string nickname);
 		bool						parse_channel(const std::string &name);
-        void	                    search_channel(std::string &old_nick, std::string &new_nick);
+        void	                    search_channel(Client *sender, std::string &new_nick);
 		void						cleanup(size_t index, std::string msg);
         bool                        handleOpCmds(Client *sender, const t_message &msg);
         bool                        channelExists(const std::string &name) const;

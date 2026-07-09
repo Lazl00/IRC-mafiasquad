@@ -6,7 +6,7 @@
 /*   By: ainthana <ainthana@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/08 12:35:32 by wailas            #+#    #+#             */
-/*   Updated: 2026/07/08 15:50:07 by ainthana         ###   ########.fr       */
+/*   Updated: 2026/07/09 22:21:35 by ainthana         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -145,7 +145,8 @@ void Server::Create_channel(const char *buffer, Client &client)
         chan->addMember(&client);
         chan->addOperator(&client);
 
-        std::string join = ":" + client.getNickname() + " JOIN " + channelName + "\r\n";
+        std::string prefix = client.getNickname() + "!" + client.getName() + "@localhost";
+        std::string join = ":" + prefix + " JOIN " + channelName + "\r\n";
         Broadcast(chan, join);
         return;
     }
@@ -183,7 +184,8 @@ void Server::Create_channel(const char *buffer, Client &client)
     chan->addMember(&client);
     chan->removeInvited(&client);
 
-    std::string join = ":" + client.getNickname() + " JOIN " + channelName + "\r\n";
+    std::string prefix = client.getNickname() + "!" + client.getName() + "@localhost";
+    std::string join = ":" + prefix + " JOIN " + channelName + "\r\n";
     Broadcast(chan, join);
 }
 

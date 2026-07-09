@@ -140,40 +140,44 @@ std::string	Server::read_code(int code, std::string target, std::string params, 
 	return oss.str();
 }
 
-void	Server::search_channel(std::string &old_nick, std::string &new_nick)
+void Server::search_channel(Client *sender, std::string &new_nick)
 {
-	std::set<Client*> ToNotify;
-	std::map<std::string, Channel*>::iterator it = channel.begin();
-	for (; it != channel.end(); it++)
-	{
-		for (size_t i = 0; i < it->second->getMembers().size(); i++)
-		{
-			if (it->second->getMembers()[i]->getNickname() == old_nick)
-			{
-				for (size_t j = 0; j < it->second->getMembers().size(); j++)
-				{
-                    if (it->second->getMembers()[j]->getNickname() != old_nick)
-					    ToNotify.insert(it->second->getMembers()[j]);
-				}
-			}
-		}
-	}
-	std::ostringstream	oss;
-	std::string			final_message;
+    std::set<Client*> ToNotify;
+    std::string old_nick = sender->getNickname();
 
+    ToNotify.insert(sender); 
 
-    oss << ":"
-        << old_nick << "!"
-        << old_nick << "@localhost "
-        << "NICK :"
-        << new_nick
-        << "\r\n";
-	final_message = oss.str();
-	std::set<Client*>::iterator it_set = ToNotify.begin();
-	for (; it_set != ToNotify.end(); it_set++)
-	{
-		send((*it_set)->getFd(), final_message.c_str(), final_message.size(), 0);
-	}
+    std::map<std::string, Channel*>::iterator it = channel.begin();
+    for (; it != channel.end(); it++)
+    {
+        bool is_member = false;
+        for (size_t i = 0; i < it->second->getMembers().size(); i++)
+        {
+            if (it->second->getMembers()[i] == sender)
+            {
+                is_member = true;
+                break;
+            }
+        }
+
+        if (is_member)
+        {
+            for (size_t j = 0; j < it->second->getMembers().size(); j++)
+            {
+                ToNotify.insert(it->second->getMembers()[j]);
+            }
+        }
+    }
+
+    std::ostringstream  oss;
+    oss << ":" << old_nick << "!" << sender->getName() << "@localhost NICK :" << new_nick << "\r\n";
+    std::string final_message = oss.str();
+
+    std::set<Client*>::iterator it_set = ToNotify.begin();
+    for (; it_set != ToNotify.end(); it_set++)
+    {
+        send((*it_set)->getFd(), final_message.c_str(), final_message.size(), 0);
+    }
 }
 
 void Server::change_nick(const char *buffer, int fd, size_t i)
@@ -201,7 +205,9 @@ void Server::change_nick(const char *buffer, int fd, size_t i)
     }
 
     std::string old_nick = clients[i].getNickname();
-	search_channel(old_nick, msg.params[0]);
+    
+    search_channel(&clients[i], msg.params[0]);
+    
     clients[i].setNickname(msg.params[0]);
 
     std::cout << clients[i].getColor() << "Client [" << clients[i].getId()
