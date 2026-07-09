@@ -47,7 +47,6 @@ class Channel
         void setName(std::string name);
         void setTopic(std::string topic);
         void seeTopic();
-        void mode(char cmd, std::string arg);
         void kick(Client *client);
         bool isInvited(Client *client) const;
         bool isMember(Client *client) const;
@@ -100,7 +99,7 @@ class Server
         bool                        exist_nick(std::string nickname);
         std::string                 getBackgroundColorCode(int socket);
         std::vector<struct pollfd>  getFds() const;
-        void                        check_register(int fd, size_t i);
+        void                        check_register(int fd, int i);
         Channel*                    getChannel(const std::string &name);
 		bool	                	parse_token(char *buffer, int result, int index, char *av);
         t_message                   parse_message(const std::string &line);

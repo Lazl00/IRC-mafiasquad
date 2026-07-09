@@ -1,6 +1,7 @@
 #include "includes/irc.hpp"
 
 Server *g_serv = NULL;
+bool g_running = true;
 
 int main(int ac, char **av)
 {
@@ -29,11 +30,10 @@ void handle_sig(int sig)
     (void)sig;
     std::cout << "\nServer Down" << std::endl;
 
+	g_running = false;
     if (g_serv)
     {
         close(g_serv->getServerFd());
         g_serv->sig_handler();
     }
-    
-    exit(0);
 }

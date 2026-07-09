@@ -6,7 +6,7 @@
 /*   By: ainthana <ainthana@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/28 12:00:01 by wailas            #+#    #+#             */
-/*   Updated: 2026/07/08 15:47:06 by ainthana         ###   ########.fr       */
+/*   Updated: 2026/07/09 13:13:23 by ainthana         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,7 @@ Server::Server() {};
 
 Server::~Server()
 {
+	std::cout << "slt" << std::endl;
     for (size_t i = 0; i < fds.size(); i++)
         close(fds[i].fd);
     fds.clear();
@@ -74,7 +75,11 @@ void    Server::init_server(int port)
 
 void    Server::sig_handler()
 {
-    fds.clear();
+	for (size_t i = 0; i < fds.size(); i++) {
+			close(fds[i].fd);
+	}
+	//fds.clear();
+	//clients.clear();
 }
 
 void    Server::init_poll(char *av)
@@ -85,10 +90,9 @@ void    Server::init_poll(char *av)
     serveur_fd_poll.revents = 0;
     fds.push_back(serveur_fd_poll);
     
-    while (true)
+    while (g_running)
     {
         poll(fds.data(), fds.size(), -1);
-        
         if (fds[0].revents & POLLIN)
         {
             int         fd;
@@ -140,7 +144,7 @@ int     Server::getServerFd() const
     return (this->serveur_fd);
 }
 
-void Server::check_register(int fd, size_t i)
+void Server::check_register(int fd, int i)
 {
     if (clients[i].getHasPassword()
         && clients[i].getHasNickname()
@@ -478,21 +482,19 @@ bool Server::handleTopic(Client *sender, Channel *chan, const t_message &msg)
         }
         return true;
     }
-    
-    else if(chan->isOperator(sender) || chan->isTopicProtected())
+
+    if (chan->isTopicProtected() && !chan->isOperator(sender))
     {
-        chan->setTopic(concatParams(msg, 1));
-
-        std::string prefix = sender->getNickname() + "!" + sender->getName() + "@localhost";
-        std::string topic_msg = ":" + prefix + " TOPIC " + chan->getChannelName() + " :" + concatParams(msg, 1) + "\r\n";
-        Broadcast(chan, topic_msg);
-
-        return true;
+        std::string err = read_code(482, sender->getNickname(), chan->getChannelName(), "You're not channel operator");
+        send(sender->getFd(), err.c_str(), err.length(), 0);
+        return false;
     }
-    
-    std::string err = read_code(482, sender->getNickname(), chan->getChannelName(), "You're not a channel operator");
-    send(sender->getFd(), err.c_str(), err.length(), 0);
-    return false;
+
+    chan->setTopic(concatParams(msg, 1));
+    std::string prefix = sender->getNickname() + "!" + sender->getName() + "@localhost";
+    std::string topic_msg = ":" + prefix + " TOPIC " + chan->getChannelName() + " :" + concatParams(msg, 1) + "\r\n";
+    Broadcast(chan, topic_msg);
+    return true;
 }
 
 bool Server::handleKick(Client *sender, Channel *chan, const t_message &msg)

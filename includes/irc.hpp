@@ -21,6 +21,9 @@
 #include <fcntl.h>
 #include <stdio.h>
 
+extern Server *g_serv;
+extern bool g_running;
+
 void    handle_sig(int sig);
 std::string concatParams(const t_message &msg, size_t start);
 

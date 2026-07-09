@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lcournoy <lcournoy@student.42.fr>          +#+  +:+       +#+        */
+/*   By: ainthana <ainthana@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/06 15:28:39 by wailas            #+#    #+#             */
-/*   Updated: 2026/07/05 19:56:07 by lcournoy         ###   ########.fr       */
+/*   Updated: 2026/07/09 11:57:49 by ainthana         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,6 +29,7 @@ Client::Client(int fd, int id, std::string color) : id(id), fd(fd), color(color)
     this->has_password = 0;
     this->has_register = 0;
     this->has_nickname = 0;
+	this->hasWelcome = 0;
     this->has_user = 0;
     this->color = color;
     std::cout << color << "Client [" << this->id<< "] connecte"<< "\033[0m" << std::endl;
