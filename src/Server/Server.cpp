@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ainthana <ainthana@student.42.fr>          +#+  +:+       +#+        */
+/*   By: wailas <wailas@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/28 12:00:01 by wailas            #+#    #+#             */
-/*   Updated: 2026/07/09 13:13:23 by ainthana         ###   ########.fr       */
+/*   Updated: 2026/07/09 14:25:06 by wailas           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -640,8 +640,17 @@ bool Server::handleMode(Client *sender, Channel *chan, const t_message &msg)
             }
         }
         chan->set_k(type);
+        if (type == false)
+        {
+            std::string removeKeyMsg = msg.params[0] + " key system has been disabled.";
+            Broadcast(getChannel(msg.params[0]), removeKeyMsg);
+        }
         if (type == true)
+        {
+            std::string addKeyMsg = msg.params[0] + " key system has been enabled.";
+            Broadcast(getChannel(msg.params[0]), addKeyMsg);
             chan->setKey(msg.params[2]);
+        }
         return true;
     }
     if (msg.params[1][1] == 'o')
@@ -660,9 +669,17 @@ bool Server::handleMode(Client *sender, Channel *chan, const t_message &msg)
             return false;
         }
         if (type == true)
+        {
+            std::string promoteMsg = "You have been promoted to Operator in" + msg.params[0] + ".";
+            send(sender->getFd(), promoteMsg.c_str(), promoteMsg.length(), 0);
             chan->addOperator(target);
+        }
         if (type == false)
+        {
+            std::string demoteMsg = "You've lost your operator privileges in" + msg.params[0] + ".";
+            send(sender->getFd(), demoteMsg.c_str(), demoteMsg.length(), 0);
             chan->removeOperator(target);
+        }
         return true;
     }
     if (msg.params[1][1] == 'l')

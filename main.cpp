@@ -33,7 +33,6 @@ void handle_sig(int sig)
 	g_running = false;
     if (g_serv)
     {
-        close(g_serv->getServerFd());
         g_serv->sig_handler();
     }
 }
