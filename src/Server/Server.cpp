@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: wailas <wailas@student.42.fr>              +#+  +:+       +#+        */
+/*   By: ainthana <ainthana@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/28 12:00:01 by wailas            #+#    #+#             */
-/*   Updated: 2026/07/09 14:25:06 by wailas           ###   ########.fr       */
+/*   Updated: 2026/07/09 14:44:46 by ainthana         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -670,14 +670,14 @@ bool Server::handleMode(Client *sender, Channel *chan, const t_message &msg)
         }
         if (type == true)
         {
-            std::string promoteMsg = "You have been promoted to Operator in" + msg.params[0] + ".";
-            send(sender->getFd(), promoteMsg.c_str(), promoteMsg.length(), 0);
+            std::string promoteMsg = "You have been promoted to Operator in " + msg.params[0] + ".";
+            send(target->getFd(), promoteMsg.c_str(), promoteMsg.length(), 0);
             chan->addOperator(target);
         }
         if (type == false)
         {
-            std::string demoteMsg = "You've lost your operator privileges in" + msg.params[0] + ".";
-            send(sender->getFd(), demoteMsg.c_str(), demoteMsg.length(), 0);
+            std::string demoteMsg = "You've lost your operator privileges in " + msg.params[0] + ".";
+            send(target->getFd(), demoteMsg.c_str(), demoteMsg.length(), 0);
             chan->removeOperator(target);
         }
         return true;
