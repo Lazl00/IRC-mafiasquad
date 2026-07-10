@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: wailas <wailas@student.42.fr>              +#+  +:+       +#+        */
+/*   By: ainthana <ainthana@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/28 12:00:01 by wailas            #+#    #+#             */
-/*   Updated: 2026/07/10 12:23:54 by wailas           ###   ########.fr       */
+/*   Updated: 2026/07/10 23:56:52 by ainthana         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -363,46 +363,91 @@ size_t  Server::find_client_by_nick(std::string nickname) {
     return (clients.size());
 }
 
-void	Server::cleanup(size_t index, std::string msg) {
-	
-	std::string prefix = clients[index].getNickname() + "!" 
+void Server::cleanup(size_t index, std::string msg)
+{
+    std::string prefix = clients[index].getNickname() + "!"
                        + clients[index].getName() + "@localhost";
-	if (msg.empty())
-		msg = "Leaving";
+    if (msg.empty())
+        msg = "Leaving";
 
-	std::string final_msg = ":" + prefix + " QUIT :" + msg + "\r\n";
+    std::string final_msg = ":" + prefix + " QUIT :" + msg + "\r\n";
 
-	std::map<std::string, Channel*>::iterator it;
-	for (it = channel.begin(); it != channel.end();)
-	{
-		std::vector<Client*> members = it->second->getMembers();
-		bool found = false;
-		
-		for (size_t j = 0; j < members.size(); j++)
-		{
-			if (members[j] == &clients[index])
-			{
-				Broadcast(it->second, final_msg);
-				it->second->kick(&clients[index]);
-				found = true;
-				break;
-			}
-		}
-		
-		if (found && it->second->getMembers().empty())
-		{
-			delete it->second;
-			channel.erase(it++);
-		}
-		else
-		{
-			++it;
-		}
-	}
+    // ÉTAPE 1 : sauvegarder les fd de tous les channels AVANT tout erase
+    // (les pointeurs sont encore valides ici)
+    std::map<std::string, std::vector<int> > memberFds;
+    std::map<std::string, std::vector<int> > operatorFds;
+    std::map<std::string, std::vector<int> > invitedFds;
 
-	close(fds[index + 1].fd);
-	fds.erase(fds.begin() + index + 1);
-	clients.erase(clients.begin() + index);
+    for (std::map<std::string, Channel*>::iterator it = channel.begin();
+         it != channel.end(); ++it)
+    {
+        const std::vector<Client*>& m = it->second->getMembers();
+        for (size_t j = 0; j < m.size(); j++)
+            memberFds[it->first].push_back(m[j]->getFd());
+
+        const std::vector<Client*>& ops = it->second->getOperators();
+        for (size_t j = 0; j < ops.size(); j++)
+            operatorFds[it->first].push_back(ops[j]->getFd());
+
+        const std::vector<Client*>& inv = it->second->getInvited();
+        for (size_t j = 0; j < inv.size(); j++)
+            invitedFds[it->first].push_back(inv[j]->getFd());
+    }
+
+    // ÉTAPE 2 : broadcast QUIT et retirer le client de ses channels
+    for (std::map<std::string, Channel*>::iterator it = channel.begin();
+         it != channel.end();)
+    {
+        if (it->second->isMember(&clients[index]))
+        {
+            Broadcast(it->second, final_msg);
+            it->second->kick(&clients[index]);
+        }
+        if (it->second->getMembers().empty())
+        {
+            delete it->second;
+            memberFds.erase(it->first);
+            operatorFds.erase(it->first);
+            invitedFds.erase(it->first);
+            channel.erase(it++);
+        }
+        else
+            ++it;
+    }
+
+    // ÉTAPE 3 : supprimer le client du vector
+    close(fds[index + 1].fd);
+    fds.erase(fds.begin() + index + 1);
+    clients.erase(clients.begin() + index);
+
+    // ÉTAPE 4 : rebuilder les pointeurs depuis les fd sauvegardés
+    for (std::map<std::string, Channel*>::iterator it = channel.begin();
+         it != channel.end(); ++it)
+    {
+        const std::string& name = it->first;
+        Channel *chan = it->second;
+
+        std::vector<Client*> newM, newO, newI;
+
+        for (size_t j = 0; j < memberFds[name].size(); j++)
+            for (size_t k = 0; k < clients.size(); k++)
+                if (clients[k].getFd() == memberFds[name][j])
+                    { newM.push_back(&clients[k]); break; }
+
+        for (size_t j = 0; j < operatorFds[name].size(); j++)
+            for (size_t k = 0; k < clients.size(); k++)
+                if (clients[k].getFd() == operatorFds[name][j])
+                    { newO.push_back(&clients[k]); break; }
+
+        for (size_t j = 0; j < invitedFds[name].size(); j++)
+            for (size_t k = 0; k < clients.size(); k++)
+                if (clients[k].getFd() == invitedFds[name][j])
+                    { newI.push_back(&clients[k]); break; }
+
+        chan->rebuildMembers(newM);
+        chan->rebuildOperators(newO);
+        chan->rebuildInvited(newI);
+    }
 }
 
 bool Server::channelExists(const std::string &name) const

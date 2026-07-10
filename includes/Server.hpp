@@ -56,6 +56,11 @@ class Channel
         void set_k(bool type);
         void set_l(bool type);
         void setKey(std::string key);
+		void rebuildMembers(const std::vector<Client*> &newMembers);
+		void rebuildOperators(const std::vector<Client*> &newOps);
+		void rebuildInvited(const std::vector<Client*> &newInv);
+		const std::vector<Client*>& getOperators() const;
+		const std::vector<Client*>& getInvited() const;
 };
 
 class Bot

@@ -6,7 +6,7 @@
 /*   By: ainthana <ainthana@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/08 12:35:32 by wailas            #+#    #+#             */
-/*   Updated: 2026/07/09 22:21:35 by ainthana         ###   ########.fr       */
+/*   Updated: 2026/07/11 00:00:07 by ainthana         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -313,4 +313,29 @@ void Channel::set_l(bool type)
 void Channel::setKey(std::string key)
 {
     _key = key;
+}
+
+void Channel::rebuildMembers(const std::vector<Client*> &newMembers)
+{
+    _members = newMembers;
+}
+
+void Channel::rebuildOperators(const std::vector<Client*> &newOps)
+{
+    _operators = newOps;
+}
+
+void Channel::rebuildInvited(const std::vector<Client*> &newInv)
+{
+    _invited = newInv;
+}
+
+const std::vector<Client*>& Channel::getOperators() const 
+{ 
+    return _operators;
+}
+
+const std::vector<Client*>& Channel::getInvited() const
+{ 
+    return _invited;
 }
