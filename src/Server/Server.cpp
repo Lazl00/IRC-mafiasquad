@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ainthana <ainthana@student.42.fr>          +#+  +:+       +#+        */
+/*   By: wailas <wailas@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/28 12:00:01 by wailas            #+#    #+#             */
-/*   Updated: 2026/07/10 00:00:44 by ainthana         ###   ########.fr       */
+/*   Updated: 2026/07/10 12:23:54 by wailas           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -72,14 +72,14 @@ void    Server::init_server(int port)
     }
 };
 
-void    Server::sig_handler()
-{
-	for (size_t i = 0; i < fds.size(); i++) {
-			close(fds[i].fd);
-	}
-	//fds.clear();
-	//clients.clear();
-}
+// void    Server::sig_handler()
+// {
+// 	for (size_t i = 0; i < fds.size(); i++) {
+// 			close(fds[i].fd);
+// 	}
+// 	//fds.clear();
+// 	//clients.clear();
+// }
 
 void    Server::init_poll(char *av)
 {
@@ -422,7 +422,11 @@ bool Server::handleOpCmds(Client *sender, const t_message &msg)
 
     Channel *chan = getChannel(chanName);
     if (!chan)
+    {
+        std::string err = read_code(401, sender->getNickname(), msg.params[1], "No such nick/channel");
+        send(sender->getFd(), err.c_str(), err.length(), 0);
         return false;
+    }
     
     if (!chan->isMember(sender))
     {

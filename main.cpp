@@ -31,8 +31,8 @@ void handle_sig(int sig)
     std::cout << "\nServer Down" << std::endl;
 
 	g_running = false;
-    if (g_serv)
-    {
-        g_serv->sig_handler();
-    }
+    // if (g_serv)
+    // {
+    //     g_serv->sig_handler();
+    // }
 }

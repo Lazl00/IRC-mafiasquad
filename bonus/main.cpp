@@ -2,6 +2,14 @@
 #include "../includes/Server.hpp"
 #include <sstream>
 
+bool g_running = true;
+
+void handle_sig(int sig)
+{
+    (void)sig;
+    g_running = false;
+}
+
 int main(int argc, char **argv)
 {
     if (argc != 3) {
@@ -16,14 +24,20 @@ int main(int argc, char **argv)
     bot.command_bot();
 
     char buf[512];
-    while (true)
+    signal(SIGINT, handle_sig);
+    while (g_running)
     {
         int n = recv(bot.getSock(), buf, sizeof(buf) - 1, 0);
-        if (n <= 0)
+        if (n < 0)
+        {
+            if (errno == EAGAIN || errno == EWOULDBLOCK)
+                continue;
+            break;
+        }
+        if (n == 0)
             break;
         buf[n] = '\0';
         std::string buffer(buf);
-
         std::cout << buf;
         bot.parsing_bot(buffer);
     }

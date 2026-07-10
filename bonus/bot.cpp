@@ -4,7 +4,10 @@
 
 Bot::Bot(const std::string& password, const std::string& nickname) : _password(password), _nickname(nickname) {};
 
-Bot::~Bot() {};
+Bot::~Bot() {
+	if (_sock != -1)
+		close(_sock);
+};
 
 int	Bot::getSock() const
 {
@@ -38,7 +41,7 @@ bool	Bot::connect_to_server(const std::string& host, int port)
 		std::cerr << "Error Connect()" << std::endl;
 		return (false);
 	}
-	std::cout << "Connecté au serveur avec succès, fd : " << _sock << std::endl;
+	fcntl(getSock(), F_SETFL, O_NONBLOCK);
 	return (true);
 }
 
@@ -66,19 +69,21 @@ void	Bot::parsing_bot(std::string &buffer)
 	cmd = buffer.substr(pos_command + 2);
 	if (cmd == "!help\r\n")
 	{
-		msg_to_nick = "PRIVMSG " + nickname + " :Available commands:\n!time  - Get current time\n!date  - Get current date\n!ping  - Pong !\n!roll  - Roll a random dice (1-6)\n!echo  - Repeat your message\n!help  - Show this help\r\n";
+		msg_to_nick = "PRIVMSG " + nickname + " :Available commands:\n!time  - Get current time\n!date  - Get current date\n!ping  - Pong !\n!help  - Show this help\r\n";
 		send(_sock, msg_to_nick.c_str(), msg_to_nick.size(), 0);
 	}
 	else if (cmd == "!ping\r\n")
 	{
-		msg_to_nick = "PRIVMSG " + nickname + " pong\r\n";
+		msg_to_nick = "PRIVMSG " + nickname + " :pong\r\n";
 		send(_sock, msg_to_nick.c_str(), msg_to_nick.size(), 0);
 	}
 	else if (cmd == "!time\r\n")
 	{
 		time_t timestamp;
 		time(&timestamp);
-		msg_to_nick = "PRIVMSG " + nickname + " :" + ctime(&timestamp) + "\r\n";
+		std::string t = ctime(&timestamp);
+		t.erase(t.size() - 1);
+		msg_to_nick = "PRIVMSG " + nickname + " :" + t + "\r\n";
 		send(_sock, msg_to_nick.c_str(), msg_to_nick.size(), 0);
 	}
 	else if (cmd == "!date\r\n")
