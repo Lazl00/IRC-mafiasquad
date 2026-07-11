@@ -6,7 +6,7 @@
 /*   By: ainthana <ainthana@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/28 12:00:01 by wailas            #+#    #+#             */
-/*   Updated: 2026/07/11 17:44:31 by ainthana         ###   ########.fr       */
+/*   Updated: 2026/07/11 18:02:52 by ainthana         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -112,6 +112,8 @@ void    Server::init_poll(char *av)
             std::string clientColor;
             
             fd = accept(this->serveur_fd, NULL, NULL);
+            if (fd < 0)
+                continue;
             fcntl(fd, F_SETFL, O_NONBLOCK);
             clientColor = getBackgroundColorCode(this->next_id);
             Client client(fd, this->next_id++, clientColor);
@@ -146,7 +148,12 @@ void    Server::init_poll(char *av)
                 result = recv(fds[i].fd, buffer, sizeof(buffer), 0);
                 
                 if (result < 0)
-                    continue;
+                {
+                    if (errno == EAGAIN || errno == EWOULDBLOCK)
+                        continue;
+                    cleanup(i - 1, "");
+                    break;
+                }
                 
 				else if (result == 0) {
 					std::cout << clients[i - 1].getColor() << "Client [" << clients[i - 1].getId() << "] disconnected\033[0m" << std::endl;
