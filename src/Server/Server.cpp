@@ -6,7 +6,7 @@
 /*   By: ainthana <ainthana@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/28 12:00:01 by wailas            #+#    #+#             */
-/*   Updated: 2026/07/11 18:06:53 by ainthana         ###   ########.fr       */
+/*   Updated: 2026/07/11 18:20:06 by ainthana         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -485,6 +485,16 @@ void Server::cleanup(size_t index, std::string msg)
         chan->rebuildMembers(newM);
         chan->rebuildOperators(newO);
         chan->rebuildInvited(newI);
+        
+        // promote si op leave et channel pas vide
+        if (!chan->getMembers().empty() && chan->getOperators().empty())
+        {
+            Client *newOp = chan->getMembers()[0];
+            chan->addOperator(newOp);
+            std::string mode_msg = ":ircserv MODE " + chan->getChannelName() 
+                                + " +o " + newOp->getNickname() + "\r\n";
+            Broadcast(chan, mode_msg);
+        }
     }
 }
 
