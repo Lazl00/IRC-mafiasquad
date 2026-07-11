@@ -6,7 +6,7 @@
 /*   By: ainthana <ainthana@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/08 12:35:32 by wailas            #+#    #+#             */
-/*   Updated: 2026/07/11 00:00:07 by ainthana         ###   ########.fr       */
+/*   Updated: 2026/07/11 17:25:16 by ainthana         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -118,7 +118,7 @@ void Server::Create_channel(const char *buffer, Client &client)
     if (msg.params.empty())
     {
         std::string err = read_code(461, client.getNickname(), "JOIN", "Not enough parameters");
-        send(client.getFd(), err.c_str(), err.length(), 0);
+        sendToClient(client, err);
         return;
     }
 
@@ -131,7 +131,7 @@ void Server::Create_channel(const char *buffer, Client &client)
     if (!parse_channel(channelName))
     {
         std::string err = read_code(403, client.getNickname(), channelName, "No such channel");
-        send(client.getFd(), err.c_str(), err.length(), 0);
+        sendToClient(client, err);
         return;
     }
 
@@ -161,7 +161,7 @@ void Server::Create_channel(const char *buffer, Client &client)
     if (chan->isInviteOnly() && !chan->isInvited(&client))
     {
         std::string err = read_code(473, client.getNickname(), channelName, "Cannot join channel (+i)");
-        send(client.getFd(), err.c_str(), err.length(), 0);
+        sendToClient(client, err);
         return;
     }
 
@@ -169,7 +169,7 @@ void Server::Create_channel(const char *buffer, Client &client)
     if (chan->hasKey() && key != chan->getKey())
     {
         std::string err = read_code(475, client.getNickname(), channelName, "Cannot join channel (+k)");
-        send(client.getFd(), err.c_str(), err.length(), 0);
+        sendToClient(client, err);
         return;
     }
 
@@ -177,7 +177,7 @@ void Server::Create_channel(const char *buffer, Client &client)
     if (chan->isLimited() && members.size() >= chan->getLimit())
     {
         std::string err = read_code(471, client.getNickname(), channelName, "Cannot join channel (+l)");
-        send(client.getFd(), err.c_str(), err.length(), 0);
+        sendToClient(client, err);
         return;
     }
 
@@ -205,7 +205,7 @@ void    Server::Broadcast(Channel *chan, std::string msg)
     
     for (size_t i = 0; i != members.size(); i++)
     {
-        send(members[i]->getFd(), msg.c_str(), msg.size(), 0);
+        sendToClient(*members[i], msg);
     }
 }
 

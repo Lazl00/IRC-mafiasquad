@@ -19,6 +19,7 @@ class Client
         bool            has_user;
         bool            has_register;
         bool            hasWelcome;
+        std::string     _sendBuffer;
 
     public:
         Client();
@@ -53,4 +54,9 @@ class Client
         void setHasWelcome(bool status);
         void setNickname(const std::string& newNickname);
         void setRegister(bool status);
+
+        void               appendSendBuffer(const std::string &data);
+		const std::string& getSendBuffer() const;
+		void               clearSendBuffer(size_t bytes);
+		bool               hasPendingData() const;
 };

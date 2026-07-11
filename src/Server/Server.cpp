@@ -6,7 +6,7 @@
 /*   By: ainthana <ainthana@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/28 12:00:01 by wailas            #+#    #+#             */
-/*   Updated: 2026/07/10 23:56:52 by ainthana         ###   ########.fr       */
+/*   Updated: 2026/07/11 17:44:31 by ainthana         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,20 @@ Server::~Server()
         delete it->second;
     }
     channel.clear();
+}
+
+void Server::sendToClient(Client &client, const std::string &msg)
+{
+    client.appendSendBuffer(msg);
+    
+    for (size_t i = 0; i < fds.size(); i++)
+    {
+        if (fds[i].fd == client.getFd())
+        {
+            fds[i].events |= POLLOUT;
+            break;
+        }
+    }
 }
 
 void    Server::init_server(int port)
@@ -108,6 +122,22 @@ void    Server::init_poll(char *av)
         for (size_t i = 1; i < fds.size(); i++)
         {
             char buffer[1024];
+
+            if (fds[i].revents & POLLOUT)
+            {
+                Client &c = clients[i - 1];
+                if (c.hasPendingData())
+                {
+                    int sent = send(fds[i].fd,
+                                    c.getSendBuffer().c_str(),
+                                    c.getSendBuffer().size(), 0);
+                    if (sent > 0)
+                        c.clearSendBuffer(sent);
+                }
+                if (!clients[i - 1].hasPendingData())
+                    fds[i].events &= ~POLLOUT ;
+            }
+            
             if (fds[i].revents & POLLIN)
             {
                 int result;
@@ -147,6 +177,8 @@ int     Server::getServerFd() const
 
 void Server::check_register(int fd, int i)
 {
+    (void)fd;
+    
     if (clients[i].getHasPassword()
         && clients[i].getHasNickname()
         && clients[i].getHasUser()
@@ -157,14 +189,15 @@ void Server::check_register(int fd, int i)
         std::string msg =
             ":ircserv 001 " + clients[i].getNickname() +
             " :Welcome to the IRC server\r\n";
-        send(fd, msg.c_str(), msg.size(), 0);
+        sendToClient(clients[i], msg);
         return;
     }
 }
 
 void    Server::authentication(const char *buffer, int fd, size_t i, char *argv)
 {
-
+    (void)fd;
+    
     if (!clients[i].getHasRegister())
     {
         t_message msg = parse_message(buffer);
@@ -177,13 +210,13 @@ void    Server::authentication(const char *buffer, int fd, size_t i, char *argv)
             if (!msg.params.empty() && msg.params[0] == "LS")
             {
                 std::string r = "CAP * LS :\r\n";
-                send(fd, r.c_str(), r.size(), 0);
+                sendToClient(clients[i], r);
             }
             else if (!msg.params.empty() && msg.params[0] == "REQ")
             {
                 // CAP REQ, pas besoin de gerer
                 std::string r = "CAP * NAK :\r\n";
-                send(fd, r.c_str(), r.size(), 0);
+                sendToClient(clients[i], r);
             }
             // CAP END, rien a faire
             return ;
@@ -194,7 +227,7 @@ void    Server::authentication(const char *buffer, int fd, size_t i, char *argv)
             if (msg.params.empty())
             {
                 std::string result = read_code(461, target, "PASS", "Not enough parameters");
-                send(fd, result.c_str(), result.size(), 0);
+                sendToClient(clients[i], result);
                 return ;
             }
             
@@ -206,7 +239,7 @@ void    Server::authentication(const char *buffer, int fd, size_t i, char *argv)
             else
             {
                 std::string result = read_code(464, target, "", "Password incorrect");
-                send(fd, result.c_str(), result.size(), 0);
+                sendToClient(clients[i], result);
             }
             return ;
         }
@@ -214,7 +247,7 @@ void    Server::authentication(const char *buffer, int fd, size_t i, char *argv)
         if (!clients[i].getHasPassword())
         {
             std::string result = read_code(464, target, "", "Password required first");
-            send(fd, result.c_str(), result.size(), 0);
+            sendToClient(clients[i], result);
             return ;
         }
 
@@ -223,21 +256,21 @@ void    Server::authentication(const char *buffer, int fd, size_t i, char *argv)
             if (msg.params.empty())
             {    
                 std::string result = read_code(431, target, "", "No nickname given");
-                send(fd, result.c_str(), result.size(), 0);
+                sendToClient(clients[i], result);
                 return ;
             }
 
             if (!is_valid_nick(msg.params[0]))
             {
                 std::string result = read_code(432, target, msg.params[0], "Erroneous nickname");
-                send(fd, result.c_str(), result.size(), 0);
+                sendToClient(clients[i], result);
                 return ;
             }
             
             if (exist_nick(msg.params[0]))
             {
                 std::string result = read_code(433, target, msg.params[0], "Nickname is already in use");
-                send(fd, result.c_str(), result.size(), 0);
+                sendToClient(clients[i], result);
                 return ;
             }
             
@@ -253,7 +286,7 @@ void    Server::authentication(const char *buffer, int fd, size_t i, char *argv)
             if (msg.params.size() < 4)
             {
                 std::string result = read_code(461, target, "USER", "Not enough parameters");
-                send(fd, result.c_str(), result.size(), 0);
+                sendToClient(clients[i], result);
                 return ;
             }
             clients[i].setUsername(msg.params[0]);
@@ -282,13 +315,13 @@ void Server::private_message(int i, const char* buffer)
 	if (msg.params.empty())
 	{
 		std::string err = read_code(411, clients[i].getNickname(), "", "No recipient given (PRIVMSG)");
-		send(clients[i].getFd(), err.c_str(), err.length(), 0);
+		sendToClient(clients[i], err);
 		return;
 	}
 	if (msg.params.size() < 2)
 	{
 		std::string err = read_code(412, clients[i].getNickname(), "", "No text to send");
-		send(clients[i].getFd(), err.c_str(), err.length(), 0);
+		sendToClient(clients[i], err);
 		return;
 	}
 	
@@ -298,7 +331,7 @@ void Server::private_message(int i, const char* buffer)
 	if (text.empty())
 	{
 		std::string err = read_code(412, clients[i].getNickname(), "", "No text to send");
-		send(clients[i].getFd(), err.c_str(), err.length(), 0);
+		sendToClient(clients[i], err);
 		return;
 	}
 
@@ -311,7 +344,7 @@ void Server::private_message(int i, const char* buffer)
 		size_t	target_index = find_client_by_nick(target);
 
 		if (target_index != clients.size())
-			send(clients[target_index].getFd(), final_msg.c_str(), final_msg.size(), 0);
+			sendToClient(clients[target_index], final_msg);
 		
 		else if (getChannel(target) != NULL && getChannel(target)->isMember(&clients[i]))
         {
@@ -320,13 +353,13 @@ void Server::private_message(int i, const char* buffer)
             for (size_t j = 0; j < members.size(); j++)
             {
                 if (members[j]->getFd() != clients[i].getFd())
-                    send(members[j]->getFd(), final_msg.c_str(), final_msg.size(), 0);
+                    sendToClient(*members[j], final_msg);
             }
         }
         else
         {
             std::string err = read_code(401, clients[i].getNickname(), target, "No such nick/channel");
-            send(clients[i].getFd(), err.c_str(), err.length(), 0);
+            sendToClient(clients[i], err);
         }
     }
 }
@@ -469,28 +502,21 @@ bool Server::handleOpCmds(Client *sender, const t_message &msg)
     if (!chan)
     {
         std::string err = read_code(401, sender->getNickname(), msg.params[1], "No such nick/channel");
-        send(sender->getFd(), err.c_str(), err.length(), 0);
+        sendToClient(*sender, err);
         return false;
     }
     
     if (!chan->isMember(sender))
     {
         std::string err = read_code(442, sender->getNickname(), chanName, "You're not on that channel");
-        send(sender->getFd(), err.c_str(), err.length(), 0);
-        return false;
-    }
-
-    if (!chan->isMember(sender))
-    {
-        std::string err = read_code(442, sender->getNickname(), chanName, "You're not on that channel");
-        send(sender->getFd(), err.c_str(), err.length(), 0);
+        sendToClient(*sender, err);
         return false;
     }
 
     if (!chan->isOperator(sender) && msg.command != "TOPIC")
     {
         std::string err = read_code(482, sender->getNickname(), chan->getChannelName(), "You're not a channel operator");
-        send(sender->getFd(), err.c_str(), err.length(), 0);
+        sendToClient(*sender, err);
         return false;
     }
 
@@ -523,12 +549,12 @@ bool Server::handleTopic(Client *sender, Channel *chan, const t_message &msg)
         if (chan->getTopic().empty())
         {
             std::string r = read_code(331, sender->getNickname(), chan->getChannelName(), "No topic is set");
-            send(sender->getFd(), r.c_str(), r.length(), 0);
+            sendToClient(*sender, r);
         }
         else
         {
             std::string r = read_code(332, sender->getNickname(), chan->getChannelName(), chan->getTopic());
-            send(sender->getFd(), r.c_str(), r.length(), 0);
+            sendToClient(*sender, r);
         }
         return true;
     }
@@ -536,7 +562,7 @@ bool Server::handleTopic(Client *sender, Channel *chan, const t_message &msg)
     if (chan->isTopicProtected() && !chan->isOperator(sender))
     {
         std::string err = read_code(482, sender->getNickname(), chan->getChannelName(), "You're not channel operator");
-        send(sender->getFd(), err.c_str(), err.length(), 0);
+        sendToClient(*sender, err);
         return false;
     }
 
@@ -553,7 +579,7 @@ bool Server::handleKick(Client *sender, Channel *chan, const t_message &msg)
     if (msg.params.size() < 2)
     {
         std::string err = read_code(461, sender->getNickname(), "KICK", "Not enough parameters");
-        send(sender->getFd(), err.c_str(), err.length(), 0);
+        sendToClient(*sender, err);
         return false;
     }
     
@@ -562,14 +588,14 @@ bool Server::handleKick(Client *sender, Channel *chan, const t_message &msg)
     if (target == NULL)
     {
         std::string err = read_code(401, sender->getNickname(), msg.params[1], "No such nick/channel");
-        send(sender->getFd(), err.c_str(), err.length(), 0);
+        sendToClient(*sender, err);
         return false;
     }
 
     if (!chan->isMember(target))
     {
         std::string err = read_code(441, sender->getNickname(), msg.params[1], "They aren't on that channel");
-        send(sender->getFd(), err.c_str(), err.length(), 0);
+        sendToClient(*sender, err);
         return false;
     }
 
@@ -586,7 +612,7 @@ bool Server::handleInvite(Client *sender, Channel *chan, const t_message &msg)
     if (msg.params.size() < 2)
     {
         std::string err = read_code(461, sender->getNickname(), "INVITE", "Not enough parameters");
-        send(sender->getFd(), err.c_str(), err.length(), 0);
+        sendToClient(*sender, err);
         return false;
     }
 
@@ -595,20 +621,20 @@ bool Server::handleInvite(Client *sender, Channel *chan, const t_message &msg)
     if (target == NULL)
     {
         std::string err = read_code(401, sender->getNickname(), msg.params[1], "No such nick");
-        send(sender->getFd(), err.c_str(), err.length(), 0);
+        sendToClient(*sender, err);
         return false;
     }
 
     if (target == sender)
     {
         std::string err = read_code(443, sender->getNickname(), msg.params[1], "is already on channel");
-        send(sender->getFd(), err.c_str(), err.length(), 0);
+        sendToClient(*sender, err);
         return false;
     }
     if (chan->isMember(target))
     {
         std::string err = read_code(443, sender->getNickname(), msg.params[1], "is already on channel");
-        send(sender->getFd(), err.c_str(), err.length(), 0);
+        sendToClient(*sender, err);
         return false;
     }
 
@@ -616,11 +642,11 @@ bool Server::handleInvite(Client *sender, Channel *chan, const t_message &msg)
 
     // confirmation au sender (341 RPL_INVITING)
     std::string confirm = read_code(341, sender->getNickname(), msg.params[1], chan->getChannelName());
-    send(sender->getFd(), confirm.c_str(), confirm.length(), 0);
+    sendToClient(*sender, confirm);
 
     // notification à la cible
     std::string notif = ":" + sender->getNickname() + " INVITE " + target->getNickname() + " " + chan->getChannelName() + "\r\n";
-    send(target->getFd(), notif.c_str(), notif.length(), 0);
+    sendToClient(*target, notif);
 
     return true;
 }
@@ -630,7 +656,7 @@ bool Server::handleMode(Client *sender, Channel *chan, const t_message &msg) //f
     if (msg.params.size() < 2)
     {
         std::string err = read_code(461, sender->getNickname(), "MODE", "Not enough parameters.");
-        send(sender->getFd(), err.c_str(), err.length(), 0);
+        sendToClient(*sender, err);
         return false;
     }
 
@@ -643,7 +669,7 @@ bool Server::handleMode(Client *sender, Channel *chan, const t_message &msg) //f
     else
     {
         std::string err = read_code(461, sender->getNickname(), "MODE", "Wrong input parameters.");
-        send(sender->getFd(), err.c_str(), err.length(), 0);
+        sendToClient(*sender, err);
         return false;
     }
 
@@ -652,7 +678,7 @@ bool Server::handleMode(Client *sender, Channel *chan, const t_message &msg) //f
         if (msg.params.size() != 2)
         {
             std::string err = read_code(461, sender->getNickname(), "MODE", "Wrong input parameters.");
-            send(sender->getFd(), err.c_str(), err.length(), 0);
+            sendToClient(*sender, err);
             return false;
         }
         chan->set_i(type);
@@ -670,7 +696,7 @@ bool Server::handleMode(Client *sender, Channel *chan, const t_message &msg) //f
         if (msg.params.size() != 2)
         {
             std::string err = read_code(461, sender->getNickname(), "MODE", "Wrong input parameters.");
-            send(sender->getFd(), err.c_str(), err.length(), 0);
+            sendToClient(*sender, err);
             return false;
         }
         chan->set_t(type);
@@ -690,7 +716,7 @@ bool Server::handleMode(Client *sender, Channel *chan, const t_message &msg) //f
             if (msg.params.size() != 2)
             {
                 std::string err = read_code(461, sender->getNickname(), "MODE", "Wrong input parameters.");
-                send(sender->getFd(), err.c_str(), err.length(), 0);
+                sendToClient(*sender, err);
                 return false;
             }
         }
@@ -699,7 +725,7 @@ bool Server::handleMode(Client *sender, Channel *chan, const t_message &msg) //f
             if (msg.params.size() != 3)
             {
                 std::string err = read_code(461, sender->getNickname(), "MODE", "Wrong input parameters.");
-                send(sender->getFd(), err.c_str(), err.length(), 0);
+                sendToClient(*sender, err);
                 return false;
             }
         }
@@ -728,14 +754,14 @@ bool Server::handleMode(Client *sender, Channel *chan, const t_message &msg) //f
         if (msg.params.size() != 3)
         {
             std::string err = read_code(461, sender->getNickname(), "MODE", "Wrong input parameters.");
-            send(sender->getFd(), err.c_str(), err.length(), 0);
+            sendToClient(*sender, err);
             return false;
         }
         Client *target = getClientByNick(msg.params[2]);
         if (target == NULL)
         {
             std::string err = read_code(401, sender->getNickname(), msg.command, "No such nick");
-            send(sender->getFd(), err.c_str(), err.length(), 0);
+            sendToClient(*sender, err);
             return false;
         }
         if (type == true)
@@ -761,7 +787,7 @@ bool Server::handleMode(Client *sender, Channel *chan, const t_message &msg) //f
             if (msg.params.size() != 2)
             {
                 std::string err = read_code(461, sender->getNickname(), "MODE", "Wrong input parameters.");
-                send(sender->getFd(), err.c_str(), err.length(), 0);
+                sendToClient(*sender, err);
                 return false;
             }
         }
@@ -770,7 +796,7 @@ bool Server::handleMode(Client *sender, Channel *chan, const t_message &msg) //f
             if (msg.params.size() != 3)
             {
                 std::string err = read_code(461, sender->getNickname(), "MODE", "Wrong input parameters.");
-                send(sender->getFd(), err.c_str(), err.length(), 0);
+                sendToClient(*sender, err);
                 return false;
             }
         }
@@ -781,7 +807,6 @@ bool Server::handleMode(Client *sender, Channel *chan, const t_message &msg) //f
         {
             chan->set_l(false);
             chan->setLimit(ULONG_MAX);
-            std::cout << "l set à false" << std::endl;
 
             std::string mode_msg = ":" + prefix + " MODE " + chan->getChannelName() + " -l\r\n";
             Broadcast(chan, mode_msg);
@@ -793,12 +818,11 @@ bool Server::handleMode(Client *sender, Channel *chan, const t_message &msg) //f
             if (chan->getMembers().size() > (size_t)atol(msg.params[2].c_str()))
             {
                 std::string err = read_code(401, sender->getNickname(), msg.command, "Can only set a limit above the current number of members.");
-                send(sender->getFd(), err.c_str(), err.length(), 0);
+                sendToClient(*sender, err);
                 return false;
             }
             chan->set_l(true);
             chan->setLimit(atol(msg.params[2].c_str()));
-            std::cout << "l set à true" << std::endl;
 
             std::string mode_msg = ":" + prefix + " MODE " + chan->getChannelName() + " +l " + msg.params[2] + "\r\n";
             Broadcast(chan, mode_msg);
@@ -808,7 +832,7 @@ bool Server::handleMode(Client *sender, Channel *chan, const t_message &msg) //f
     else
     {
         std::string err = read_code(461, sender->getNickname(), "MODE", "Wrong input parameters.");
-        send(sender->getFd(), err.c_str(), err.length(), 0);
+        sendToClient(*sender, err);
         return false;
     }
     
@@ -826,4 +850,12 @@ std::string concatParams(const t_message &msg, size_t start)
         result += msg.params[i];
     }
     return result;
+}
+
+Client* Server::getClientByFd(int fd)
+{
+    for (size_t i = 0; i < clients.size(); i++)
+        if (clients[i].getFd() == fd)
+            return &clients[i];
+    return NULL;
 }

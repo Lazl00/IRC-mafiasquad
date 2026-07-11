@@ -24,7 +24,7 @@ bool Server::parse_token(char *buffer, int result, int index, char *av)
 			if (!msg.params.empty())
 				pong += msg.params[0];
 			pong += "\r\n";
-			send(client_fd, pong.c_str(), pong.size(), 0);
+			sendToClient(clients[index], pong);
 			continue ;
 		}
 
@@ -176,31 +176,32 @@ void Server::search_channel(Client *sender, std::string &new_nick)
     std::set<Client*>::iterator it_set = ToNotify.begin();
     for (; it_set != ToNotify.end(); it_set++)
     {
-        send((*it_set)->getFd(), final_message.c_str(), final_message.size(), 0);
+        sendToClient(**it_set, final_message);
     }
 }
 
 void Server::change_nick(const char *buffer, int fd, size_t i)
 {
+    (void)fd;
     t_message msg = parse_message(buffer);
     std::string target = clients[i].getNickname();
 
     if (msg.params.empty())
     {
         std::string r = read_code(431, target, "", "No nickname given");
-        send(fd, r.c_str(), r.size(), 0);
+        sendToClient(clients[i], r);
         return ;
     }
     if (!is_valid_nick(msg.params[0]))
     {
         std::string r = read_code(432, target, msg.params[0], "Erroneous nickname");
-        send(fd, r.c_str(), r.size(), 0);
+        sendToClient(clients[i], r);
         return ;
     }
     if (exist_nick(msg.params[0]))
     {
         std::string r = read_code(433, target, msg.params[0], "Nickname is already in use");
-        send(fd, r.c_str(), r.size(), 0);
+        sendToClient(clients[i], r);
         return ;
     }
 

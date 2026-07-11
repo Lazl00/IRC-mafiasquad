@@ -122,5 +122,7 @@ class Server
         bool                        handleInvite(Client *sender, Channel* chan, const t_message &msg);
         bool                        handleMode(Client *sender, Channel* chan, const t_message &msg);
         Client*                     getClientByNick(const std::string &nick);
+        void                        sendToClient(Client &client, const std::string &msg);
+        Client*                     getClientByFd(int fd);
 
 };

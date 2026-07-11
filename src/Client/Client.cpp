@@ -6,7 +6,7 @@
 /*   By: ainthana <ainthana@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/06 15:28:39 by wailas            #+#    #+#             */
-/*   Updated: 2026/07/09 11:57:49 by ainthana         ###   ########.fr       */
+/*   Updated: 2026/07/11 17:04:05 by ainthana         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -158,4 +158,26 @@ void Client::setHasUsername(bool status)
 void Client::setHasWelcome(bool status)
 {
     this->hasWelcome = status;
+}
+
+void Client::appendSendBuffer(const std::string &data)
+{
+    _sendBuffer += data;
+}
+
+const std::string& Client::getSendBuffer() const
+{
+    return (this->_sendBuffer);
+}
+
+void Client::clearSendBuffer(size_t bytes)
+{
+    _sendBuffer.erase(0, bytes);
+}
+
+bool Client::hasPendingData() const
+{
+    if (_sendBuffer.empty())
+        return false;
+    return true;
 }
