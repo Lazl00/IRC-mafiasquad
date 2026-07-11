@@ -6,7 +6,7 @@
 /*   By: ainthana <ainthana@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/28 12:00:01 by wailas            #+#    #+#             */
-/*   Updated: 2026/07/11 18:02:52 by ainthana         ###   ########.fr       */
+/*   Updated: 2026/07/11 18:06:53 by ainthana         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -149,8 +149,6 @@ void    Server::init_poll(char *av)
                 
                 if (result < 0)
                 {
-                    if (errno == EAGAIN || errno == EWOULDBLOCK)
-                        continue;
                     cleanup(i - 1, "");
                     break;
                 }
