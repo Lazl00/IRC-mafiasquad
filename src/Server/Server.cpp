@@ -6,7 +6,7 @@
 /*   By: ainthana <ainthana@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/28 12:00:01 by wailas            #+#    #+#             */
-/*   Updated: 2026/07/11 18:20:06 by ainthana         ###   ########.fr       */
+/*   Updated: 2026/07/12 14:19:55 by ainthana         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -603,6 +603,13 @@ bool Server::handleKick(Client *sender, Channel *chan, const t_message &msg)
     if (target == NULL)
     {
         std::string err = read_code(401, sender->getNickname(), msg.params[1], "No such nick/channel");
+        sendToClient(*sender, err);
+        return false;
+    }
+
+    if (target == sender)
+    {
+        std::string err = read_code(482, sender->getNickname(), chan->getChannelName(), "You cannot kick yourself");
         sendToClient(*sender, err);
         return false;
     }
