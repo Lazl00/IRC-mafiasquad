@@ -1,6 +1,7 @@
 #include "../includes/irc.hpp"
 #include "../includes/Server.hpp"
 #include <sstream>
+#include <cerrno>
 
 bool g_running = true;
 

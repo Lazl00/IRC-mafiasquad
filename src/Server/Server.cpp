@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ainthana <ainthana@student.42.fr>          +#+  +:+       +#+        */
+/*   By: lcournoy <lcournoy@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/28 12:00:01 by wailas            #+#    #+#             */
-/*   Updated: 2026/07/12 14:19:55 by ainthana         ###   ########.fr       */
+/*   Updated: 2026/07/12 16:35:50 by lcournoy         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -511,12 +511,16 @@ bool Server::handleOpCmds(Client *sender, const t_message &msg)
     const std::string &chanName = msg.params[0];
 
     if (!parse_channel(chanName))
+    {
+        std::string err = read_code(476, sender->getNickname(), chanName, "Bad Channel Mask");
+        sendToClient(*sender, err);
         return false;
+    }
 
     Channel *chan = getChannel(chanName);
     if (!chan)
     {
-        std::string err = read_code(401, sender->getNickname(), msg.params[1], "No such nick/channel");
+        std::string err = read_code(403, sender->getNickname(), chanName, "No such channel");
         sendToClient(*sender, err);
         return false;
     }
@@ -689,6 +693,13 @@ bool Server::handleMode(Client *sender, Channel *chan, const t_message &msg) //f
     else if (msg.params[1][0] == '+')
         type = true;
     else
+    {
+        std::string err = read_code(461, sender->getNickname(), "MODE", "Wrong input parameters.");
+        sendToClient(*sender, err);
+        return false;
+    }
+
+    if (msg.params[1].size() != 2)
     {
         std::string err = read_code(461, sender->getNickname(), "MODE", "Wrong input parameters.");
         sendToClient(*sender, err);

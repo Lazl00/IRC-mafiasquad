@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Channel.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ainthana <ainthana@student.42.fr>          +#+  +:+       +#+        */
+/*   By: lcournoy <lcournoy@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/08 12:35:32 by wailas            #+#    #+#             */
-/*   Updated: 2026/07/11 17:25:16 by ainthana         ###   ########.fr       */
+/*   Updated: 2026/07/12 16:18:28 by lcournoy         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -130,7 +130,7 @@ void Server::Create_channel(const char *buffer, Client &client)
 
     if (!parse_channel(channelName))
     {
-        std::string err = read_code(403, client.getNickname(), channelName, "No such channel");
+        std::string err = read_code(476, client.getNickname(), channelName, "Bad Channel Mask");
         sendToClient(client, err);
         return;
     }
