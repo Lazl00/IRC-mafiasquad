@@ -1,70 +1,172 @@
-This project has been created as part of the 42 curriculum by ainthana, wailas, lcournoy.
+<div align="center">
 
+# 📡 ft_irc — MafiaSquad IRC Server
 
-Description
+*A fully functional IRC server written in C++ as part of the 42 curriculum.*
 
-Basically, this project teaches us how to use port opening to connect multiple users to an "IRC Server". We`ll have to manage mutiple connections without any blocking issues by using fcntl functions, and poll to catch users inputs. We'll also learn how to use sockets and use classes and objects in a concrete project.
+[![Language](https://img.shields.io/badge/Language-C++98-blue.svg)](https://en.cppreference.com/w/cpp/98)
+[![School](https://img.shields.io/badge/School-42_Paris-black.svg)](https://42.fr)
+[![Status](https://img.shields.io/badge/Status-Finished-brightgreen.svg)]()
 
-Instructions
+**Authors — [ainthana](https://github.com/ainthana) · [wailas](https://github.com/wailas) · [lcournoy](https://github.com/lcournoy)**
 
-To create the server, you'll need to compile and lauch the executable by follozing steps:
+</div>
 
-- make                          (in the working dir)
-- ./ircserv <port> <password>   (port and password of your choice)
+---
 
-The server now must be wainting for external connections.
-You can now join it from a different computer of the network, or use multiple cmd terminals.
+## 📖 About
 
-Type the following stuff in the terminal:
+**ft_irc** is a group project from the 42 curriculum. The goal is to implement an IRC *(Internet Relay Chat)* server in C++ from scratch, following the [RFC 1459](https://www.rfc-editor.org/rfc/rfc1459) protocol.
 
-Ncat:
-ncat -C <servers IP> <port>     (you can use 'localhost' if you're on the same computer than the server)
+The project covers key systems programming concepts:
 
-You should now be connected, to gain the IRC access you'll still need to give the server a few more infos, for security and authentification means. 
+- **Non-blocking I/O** — all socket operations use `fcntl` and are multiplexed with `poll()`
+- **TCP/IP networking** — handling multiple simultaneous client connections over sockets
+- **IRC protocol** — parsing and handling standard IRC commands
+- **Object-oriented design** — C++ classes for Server, Client, Channel, etc.
 
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- A C++ compiler (`c++` / `g++`)
+- `make`
+- `ncat` or `irssi` (client to connect)
+
+### Build & Run
+
+```bash
+# Clone the repository
+git clone https://github.com/<your-repo>/ft_irc.git
+cd ft_irc
+
+# Compile
+make
+
+# Launch the server (choose any port and password)
+./ircserv <port> <password>
+```
+
+The server is now listening for incoming connections.
+
+---
+
+## 🔌 Connecting to the Server
+
+### With Ncat (quick test)
+
+```bash
+ncat -C <server-ip> <port>
+# Use 'localhost' if you're on the same machine
+```
+
+Once connected, authenticate manually:
+
+```
 PASS <password>
-NICK <nickname>
+NICK <your_nickname>
 USER <username> 0 * :<realname>
+```
 
-Irssi:
-/connect <servers IP> <port> <password>     (you can use 'localhost' if you're on the same computer than the server)
+### With Irssi (recommended IRC client)
 
-You should now have gained access to Mafiasquad's IRC !
+```bash
+/connect <server-ip> <port> <password>
+```
 
-Here's a few commands you might wanna try:
+---
 
-JOIN <#channel>
-PRIVMSG <target/#channel> <:your message.>
-QUIT (<:quiting message>)
-NICK <new nickname>
+## 💬 Supported Commands
 
-Channel's specific commands:
+### General
 
-KICK - Eject a client from the channel
-INVITE - Invite a client to a channel
-TOPIC - Change or view the channel topic
-MODE - Change the channel’s mode (+/- to set or remove a flag)
- > i: Set/remove Invite-only channel
- > t: Set/remove the restrictions of the TOPIC command to channel operators
- > k: Set/remove the channel key (password)
- > o: Give/take channel operator privilege
- > l: Set/remove the user limit to channel
+| Command | Syntax | Description |
+|---------|--------|-------------|
+| `PASS` | `PASS <password>` | Authenticate to the server |
+| `NICK` | `NICK <nickname>` | Set or change your nickname |
+| `USER` | `USER <user> 0 * :<realname>` | Register your user info |
+| `JOIN` | `JOIN <#channel>` | Join or create a channel |
+| `PRIVMSG` | `PRIVMSG <target> :<message>` | Send a message to a user or channel |
+| `QUIT` | `QUIT [:<message>]` | Disconnect from the server |
 
-Resources
+### Channel Operator Commands
 
-Documentation, AI
+| Command | Syntax | Description |
+|---------|--------|-------------|
+| `KICK` | `KICK <#channel> <user> [:<reason>]` | Remove a user from a channel |
+| `INVITE` | `INVITE <user> <#channel>` | Invite a user to a channel |
+| `TOPIC` | `TOPIC <#channel> [:<new topic>]` | View or change the channel topic |
+| `MODE` | `MODE <#channel> <+/-flag> [args]` | Change channel settings |
 
+### Channel Modes (`MODE`)
 
-Bonus
+| Flag | Description |
+|------|-------------|
+| `+i` / `-i` | Toggle **invite-only** mode |
+| `+t` / `-t` | Restrict **TOPIC** changes to operators only |
+| `+k` / `-k` | Set / remove a channel **password** |
+| `+o` / `-o` | Grant / revoke **operator** privileges |
+| `+l` / `-l` | Set / remove a **user limit** on the channel |
 
-Bot:
+---
+
+## ⭐ Bonus Features
+
+### 🤖 Bot
+
+A bot is available on the server. Send it commands via private message:
+
+```
 PRIVMSG bot !help
+```
 
-File transfer: (only on irssi)
+### 📁 File Transfer (Irssi only)
 
-/dcc send <target> <path>
+Send a file to another user:
 
-/dcc get <sender>
+```
+/dcc send <nickname> <filepath>
+```
 
-Thank you for testing our project !
-     -MafiaSquad
+Receive a file:
+
+```
+/dcc get <nickname>
+```
+
+---
+
+## 🏗️ Architecture Overview
+
+```
+ft_irc/
+├── src/
+│   ├── Server.cpp       # Core server loop (poll, accept, dispatch)
+│   ├── Client.cpp       # Client state & message parsing
+│   ├── Channel.cpp      # Channel management & modes
+│   ├── Commands/        # One file per IRC command
+│   └── Bot.cpp          # Bonus bot logic
+├── include/
+├── Makefile
+└── README.md
+```
+
+> The server uses a single `poll()` loop to handle all connected clients without blocking. No threads — pure event-driven I/O.
+
+---
+
+## 📚 Resources
+
+- [RFC 1459 — Internet Relay Chat Protocol](https://www.rfc-editor.org/rfc/rfc1459)
+- [Modern IRC client protocol reference](https://modern.ircdocs.horse/)
+- IA like CLaude, Gemini etc
+
+---
+
+<div align="center">
+
+* — MafiaSquad*
+
+</div>
