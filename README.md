@@ -8,7 +8,7 @@
 [![School](https://img.shields.io/badge/School-42_Paris-black.svg)](https://42.fr)
 [![Status](https://img.shields.io/badge/Status-Finished-brightgreen.svg)]()
 
-**Authors — [ainthana](https://github.com/ainthana) · [wailas](https://github.com/wailas) · [lcournoy](https://github.com/lcournoy)**
+**Authors — [ainthana](https://github.com/Vavongg) · [wailas](https://github.com/Atsuee) · [lcournoy](https://github.com/Lazl00)**
 
 </div>
 
